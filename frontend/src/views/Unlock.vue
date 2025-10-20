@@ -2,9 +2,13 @@
   <div class="unlock-container">
     <div class="unlock-box">
       <div class="unlock-header">
-        <t-icon name="lock-on" size="64px" style="color: #1890ff;" />
+        <div class="unlock-logo">
+          <div class="unlock-logo-icon">
+            <t-icon name="lock-on" size="32px" />
+          </div>
+        </div>
         <h1>{{ $t('auth.unlock') }}</h1>
-        <p>{{ $t('auth.enterMasterPassword') }}</p>
+        <p class="unlock-subtitle">{{ $t('auth.enterMasterPassword') }}</p>
       </div>
 
       <t-form ref="formRef" :data="form" :rules="rules" @submit="handleUnlock">
@@ -177,56 +181,92 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f5f5f5;
   padding: 20px;
+}
+
+[theme-mode="dark"] .unlock-container {
+  background: #1a1a1a;
 }
 
 .unlock-box {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   background: white;
   border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 48px 40px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f0f0;
 }
 
 [theme-mode="dark"] .unlock-box {
-  background: var(--bg-secondary);
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .unlock-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
+}
+
+.unlock-logo {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.unlock-logo-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #0050b3 0%, #1890ff 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.25);
+}
+
+[theme-mode="dark"] .unlock-logo-icon {
+  background: linear-gradient(135deg, #1890ff 0%, #4dabf7 100%);
+  box-shadow: 0 8px 24px rgba(77, 171, 247, 0.3);
 }
 
 .unlock-header h1 {
-  margin: 16px 0 8px;
+  margin: 0 0 8px 0;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: -0.5px;
 }
 
-.unlock-header p {
-  color: #666;
+[theme-mode="dark"] .unlock-header h1 {
+  color: #ffffff;
+}
+
+.unlock-subtitle {
+  color: #999;
   font-size: 14px;
-}
-
-[theme-mode="dark"] .unlock-header p {
-  color: #aaa;
+  margin: 0;
+  font-weight: 400;
 }
 
 .hint-box {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px;
+  padding: 10px 12px;
   background: #f0f9ff;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 13px;
   color: #0284c7;
+  border: 1px solid #bae6fd;
 }
 
 [theme-mode="dark"] .hint-box {
   background: rgba(2, 132, 199, 0.1);
+  border-color: rgba(2, 132, 199, 0.2);
 }
 
 .unlock-footer {

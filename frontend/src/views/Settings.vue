@@ -1,52 +1,119 @@
 <template>
   <div class="settings-page">
-    <t-header class="header">
-      <template #logo>
-        <div class="logo" @click="$router.push('/')">
-          <t-icon name="chevron-left" />
-          <span>{{ $t('settings.settings') }}</span>
+    <!-- 顶部返回栏 -->
+    <div class="header">
+      <div class="header-content">
+        <div class="back-btn" @click="$router.push('/')">
+          <t-icon name="chevron-left" size="20px" />
+          <span>返回</span>
         </div>
-      </template>
-    </t-header>
+        <h1>设置</h1>
+      </div>
+    </div>
 
     <div class="settings-content">
-      <t-card :title="$t('settings.theme')">
-        <t-radio-group v-model="appStore.theme" @change="handleThemeChange">
-          <t-radio value="light">{{ $t('settings.themeLight') }}</t-radio>
-          <t-radio value="dark">{{ $t('settings.themeDark') }}</t-radio>
-          <t-radio value="auto">{{ $t('settings.themeAuto') }}</t-radio>
-        </t-radio-group>
-      </t-card>
-
-      <t-card :title="$t('settings.language')">
-        <t-select v-model="appStore.language" @change="handleLanguageChange">
-          <t-option value="zh-CN" label="简体中文" />
-          <t-option value="en-US" label="English" />
-        </t-select>
-      </t-card>
-
-      <t-card :title="$t('settings.autoLock')">
-        <t-space direction="vertical" style="width: 100%">
-          <t-switch v-model="appStore.autoLockEnabled" @change="handleAutoLockChange">
-            <template #label>{{ $t('settings.autoLock') }}</template>
-          </t-switch>
-          <div v-if="appStore.autoLockEnabled">
-            <t-input-number
-              v-model="appStore.autoLockTimeout"
-              :min="1"
-              :max="60"
-              @change="handleAutoLockTimeoutChange"
-            />
-            <span style="margin-left: 8px;">{{ $t('settings.minutes') }}</span>
+      <!-- 外观设置 -->
+      <div class="setting-section">
+        <div class="section-title">
+          <t-icon name="palette" />
+          <span>外观</span>
+        </div>
+        <div class="setting-card">
+          <div class="setting-item">
+            <div class="item-info">
+              <div class="item-label">主题模式</div>
+              <div class="item-desc">选择您喜欢的主题</div>
+            </div>
+            <t-radio-group v-model="appStore.theme" @change="handleThemeChange" variant="default-filled">
+              <t-radio-button value="light">浅色</t-radio-button>
+              <t-radio-button value="dark">深色</t-radio-button>
+              <t-radio-button value="auto">自动</t-radio-button>
+            </t-radio-group>
           </div>
-        </t-space>
-      </t-card>
+        </div>
+      </div>
 
-      <t-card :title="$t('auth.changeMasterPassword')">
-        <t-button theme="warning" @click="showChangePassword">
-          {{ $t('auth.changeMasterPassword') }}
-        </t-button>
-      </t-card>
+      <!-- 语言设置 -->
+      <div class="setting-section">
+        <div class="section-title">
+          <t-icon name="translate" />
+          <span>语言</span>
+        </div>
+        <div class="setting-card">
+          <div class="setting-item">
+            <div class="item-info">
+              <div class="item-label">界面语言</div>
+              <div class="item-desc">选择显示语言</div>
+            </div>
+            <t-select v-model="appStore.language" @change="handleLanguageChange" style="width: 150px;">
+              <t-option value="zh-CN" label="简体中文" />
+              <t-option value="en-US" label="English" />
+            </t-select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 安全设置 -->
+      <div class="setting-section">
+        <div class="section-title">
+          <t-icon name="lock-on" />
+          <span>安全</span>
+        </div>
+        <div class="setting-card">
+          <div class="setting-item">
+            <div class="item-info">
+              <div class="item-label">自动锁定</div>
+              <div class="item-desc">闲置后自动锁定应用</div>
+            </div>
+            <t-switch v-model="appStore.autoLockEnabled" @change="handleAutoLockChange" />
+          </div>
+          
+          <div v-if="appStore.autoLockEnabled" class="setting-item sub-item">
+            <div class="item-info">
+              <div class="item-label">锁定时间</div>
+              <div class="item-desc">闲置多久后自动锁定</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <t-input-number
+                v-model="appStore.autoLockTimeout"
+                :min="1"
+                :max="60"
+                @change="handleAutoLockTimeoutChange"
+                style="width: 100px;"
+              />
+              <span class="unit-text">分钟</span>
+            </div>
+          </div>
+
+          <t-divider />
+
+          <div class="setting-item">
+            <div class="item-info">
+              <div class="item-label">修改主密码</div>
+              <div class="item-desc">更改您的主密码</div>
+            </div>
+            <t-button theme="default" variant="outline" @click="showChangePassword">
+              修改密码
+            </t-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 关于 -->
+      <div class="setting-section">
+        <div class="section-title">
+          <t-icon name="info-circle" />
+          <span>关于</span>
+        </div>
+        <div class="setting-card">
+          <div class="setting-item">
+            <div class="item-info">
+              <div class="item-label">版本信息</div>
+              <div class="item-desc">2FA Notebook v2.0.0</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 修改密码对话框 -->
@@ -128,25 +195,66 @@ const handleChangePassword = async () => {
 <style scoped>
 .settings-page {
   min-height: 100vh;
-  background: var(--bg-color);
+  background: #f5f5f5;
+}
+
+[theme-mode="dark"] .settings-page {
+  background: #1a1a1a;
 }
 
 .header {
   background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid #e5e5e5;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 [theme-mode="dark"] .header {
-  background: var(--bg-secondary);
+  background: #2a2a2a;
+  border-bottom-color: #3a3a3a;
 }
 
-.logo {
+.header-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px 24px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  font-weight: 600;
+  gap: 16px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   cursor: pointer;
+  color: #666;
+  transition: color 0.2s;
+  font-size: 14px;
+}
+
+.back-btn:hover {
+  color: #1890ff;
+}
+
+[theme-mode="dark"] .back-btn {
+  color: #999;
+}
+
+[theme-mode="dark"] .back-btn:hover {
+  color: #1890ff;
+}
+
+.header-content h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+[theme-mode="dark"] .header-content h1 {
+  color: #e5e5e5;
 }
 
 .settings-content {
@@ -155,8 +263,105 @@ const handleChangePassword = async () => {
   padding: 24px;
 }
 
-.settings-content .t-card {
-  margin-bottom: 16px;
+.setting-section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+[theme-mode="dark"] .section-title {
+  color: #999;
+}
+
+.setting-card {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  overflow: hidden;
+}
+
+[theme-mode="dark"] .setting-card {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  transition: background 0.2s;
+}
+
+.setting-item:not(:last-child) {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+[theme-mode="dark"] .setting-item:not(:last-child) {
+  border-bottom-color: #3a3a3a;
+}
+
+.sub-item {
+  background: #fafafa;
+  padding-left: 40px;
+}
+
+[theme-mode="dark"] .sub-item {
+  background: #252525;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+[theme-mode="dark"] .item-label {
+  color: #e5e5e5;
+}
+
+.item-desc {
+  font-size: 13px;
+  color: #999;
+}
+
+.unit-text {
+  font-size: 14px;
+  color: #666;
+}
+
+[theme-mode="dark"] .unit-text {
+  color: #999;
+}
+
+@media (max-width: 768px) {
+  .settings-content {
+    padding: 16px;
+  }
+
+  .setting-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .setting-item > *:last-child {
+    width: 100%;
+  }
 }
 </style>
 

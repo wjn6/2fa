@@ -1,7 +1,7 @@
 {
   "name": "2fa-backend",
   "version": "2.0.0",
-  "description": "2FA Notebook Backend - Enterprise Edition",
+  "description": "2FA Authenticator Backend",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",

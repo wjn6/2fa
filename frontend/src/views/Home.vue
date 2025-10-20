@@ -2,50 +2,60 @@
   <div class="home">
     <!-- 顶部导航栏 -->
     <div class="header">
-      <div class="header-left">
-        <t-icon name="lock-on" size="24px" style="color: #1890ff;" />
-        <span class="logo-text">2FA 笔记本</span>
-      </div>
-      <div class="header-right">
-        <t-input 
-          v-model="searchKeyword" 
-          placeholder="搜索密钥..."
-          class="search-input"
-          clearable
-        >
-          <template #prefix-icon><t-icon name="search" /></template>
-        </t-input>
-        <t-button 
-          v-if="!batchMode" 
-          theme="primary" 
-          @click="showAddDialog"
-        >
-          <template #icon><t-icon name="add" /></template>
-          <span class="btn-text">添加</span>
-        </t-button>
-        <t-button 
-          v-if="!batchMode && filteredSecrets.length > 0"
-          variant="outline" 
-          @click="enterBatchMode"
-        >
-          <template #icon><t-icon name="check-circle" /></template>
-          <span class="btn-text">批量</span>
-        </t-button>
-        <t-button 
-          v-if="batchMode"
-          theme="danger"
-          @click="exitBatchMode"
-        >
-          取消
-        </t-button>
-        <t-dropdown v-if="!batchMode" :options="menuOptions" @click="handleMenu">
-          <t-button variant="outline">
-            <t-icon name="ellipsis" />
+      <div class="header-container">
+        <div class="header-left">
+          <div class="brand-logo">
+            <div class="logo-icon">
+              <t-icon name="secured" size="22px" />
+            </div>
+            <div class="brand-info">
+              <span class="brand-name">2FA Authenticator</span>
+            </div>
+          </div>
+        </div>
+        <div class="header-center">
+          <t-input 
+            v-model="searchKeyword" 
+            placeholder="搜索密钥、发行商..."
+            class="search-input"
+            clearable
+          >
+            <template #prefix-icon><t-icon name="search" /></template>
+          </t-input>
+        </div>
+        <div class="header-right">
+          <t-button 
+            v-if="!batchMode" 
+            theme="primary" 
+            @click="showAddDialog"
+          >
+            <template #icon><t-icon name="add" /></template>
+            <span class="btn-text">新建</span>
           </t-button>
-        </t-dropdown>
-        <t-button v-if="!batchMode" variant="outline" @click="handleLock">
-          <t-icon name="lock-on" />
-        </t-button>
+          <t-button 
+            v-if="!batchMode && filteredSecrets.length > 0"
+            variant="outline" 
+            @click="enterBatchMode"
+          >
+            <template #icon><t-icon name="check-circle" /></template>
+            <span class="btn-text">批量</span>
+          </t-button>
+          <t-button 
+            v-if="batchMode"
+            theme="danger"
+            @click="exitBatchMode"
+          >
+            退出批量
+          </t-button>
+          <t-dropdown v-if="!batchMode" :options="menuOptions" @click="handleMenu">
+            <t-button variant="outline" shape="circle">
+              <t-icon name="ellipsis" />
+            </t-button>
+          </t-dropdown>
+          <t-button v-if="!batchMode" variant="outline" shape="circle" @click="handleLock">
+            <t-icon name="lock-on" />
+          </t-button>
+        </div>
       </div>
     </div>
 
@@ -110,12 +120,20 @@
 
       <!-- 空状态 -->
       <div v-if="!loading && filteredSecrets.length === 0" class="empty-state">
-        <t-icon name="inbox" size="80px" style="color: #dcdcdc;" />
-        <p class="empty-text">还没有密钥，点击"添加"按钮开始</p>
-        <t-button theme="primary" size="large" @click="showAddDialog">
-          <template #icon><t-icon name="add" /></template>
-          添加第一个密钥
-        </t-button>
+        <div class="empty-icon">
+          <t-icon name="secured" size="80px" />
+        </div>
+        <h3 class="empty-title">{{ searchKeyword ? '没有找到匹配的密钥' : '开始使用 2FA 笔记本' }}</h3>
+        <p class="empty-desc">{{ searchKeyword ? '试试其他搜索关键词' : '添加您的第一个两步验证密钥，保护账户安全' }}</p>
+        <t-space v-if="!searchKeyword" direction="vertical" size="large">
+          <t-button theme="primary" size="large" @click="showAddDialog">
+            <template #icon><t-icon name="add" /></template>
+            添加密钥
+          </t-button>
+          <t-button variant="text" size="large" @click="handleMenu({ value: 'import' })">
+            或导入现有数据
+          </t-button>
+        </t-space>
       </div>
 
       <!-- 加载状态 -->
@@ -312,8 +330,18 @@
 
       <!-- 底部统计 -->
       <div v-if="!loading && filteredSecrets.length > 0" class="footer-stats">
-        <span>共 {{ filteredSecrets.length }} 个密钥</span>
-        <span>验证码每 30 秒自动刷新</span>
+        <div class="stat-item">
+          <t-icon name="key" size="16px" />
+          <span>总计 {{ secrets.length }} 个密钥</span>
+        </div>
+        <div v-if="searchKeyword" class="stat-item">
+          <t-icon name="search" size="16px" />
+          <span>筛选 {{ filteredSecrets.length }} 个</span>
+        </div>
+        <div class="stat-item">
+          <t-icon name="refresh" size="16px" />
+          <span>{{ tokenRemaining }}秒后刷新</span>
+        </div>
       </div>
     </div>
 
@@ -996,53 +1024,113 @@ onUnmounted(() => {
 }
 
 .header {
-  background: white;
-  padding: 16px 24px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  background: linear-gradient(to bottom, #ffffff 0%, #fafafa 100%);
+  border-bottom: 1px solid #e8e8e8;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   position: sticky;
   top: 0;
   z-index: 100;
+  padding: 0;
 }
 
 [theme-mode="dark"] .header {
-  background: var(--bg-secondary);
+  background: linear-gradient(to bottom, #2a2a2a 0%, #252525 100%);
+  border-bottom-color: #3a3a3a;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.header-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 12px 32px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 32px;
+  align-items: center;
 }
 
 .header-left {
   display: flex;
   align-items: center;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
-.logo-text {
-  font-size: 18px;
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #0050b3 0%, #1890ff 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+[theme-mode="dark"] .logo-icon {
+  background: linear-gradient(135deg, #1890ff 0%, #4dabf7 100%);
+  box-shadow: 0 2px 8px rgba(77, 171, 247, 0.3);
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-name {
+  font-size: 16px;
   font-weight: 600;
-  color: #1890ff;
+  color: #1a1a1a;
+  letter-spacing: -0.3px;
+}
+
+[theme-mode="dark"] .brand-name {
+  color: #ffffff;
+}
+
+.brand-desc {
+  font-size: 11px;
+  color: #999;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.header-center {
+  display: flex;
+  justify-content: center;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .batch-toolbar {
-  background: #fff3cd;
-  border-left: 4px solid #ffc107;
+  background: #fff9e6;
+  border: 1px solid #ffe58f;
+  border-left: 3px solid #faad14;
   padding: 12px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  margin: 0 24px;
+  border-radius: 8px;
+  margin-top: -8px;
+  margin-bottom: 16px;
 }
 
 [theme-mode="dark"] .batch-toolbar {
-  background: rgba(255, 193, 7, 0.15);
-  border-left-color: #ffc107;
+  background: rgba(250, 173, 20, 0.1);
+  border-color: rgba(250, 173, 20, 0.3);
+  border-left-color: #faad14;
 }
 
 .batch-toolbar-left {
@@ -1084,47 +1172,92 @@ onUnmounted(() => {
 }
 
 .search-input {
-  width: 300px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.search-input :deep(.t-input) {
+  border-radius: 8px;
+  background: #f5f5f5;
+  border: 1px solid transparent;
+  height: 40px;
+  transition: all 0.2s;
+}
+
+.search-input :deep(.t-input__inner) {
+  font-size: 14px;
+}
+
+.search-input :deep(.t-input:hover) {
+  background: #efefef;
+  border-color: #d9d9d9;
+}
+
+.search-input :deep(.t-input:focus) {
+  background: white;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+[theme-mode="dark"] .search-input :deep(.t-input) {
+  background: rgba(255,255,255,0.06);
+  border-color: transparent;
+}
+
+[theme-mode="dark"] .search-input :deep(.t-input:hover) {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.1);
+}
+
+[theme-mode="dark"] .search-input :deep(.t-input:focus) {
+  background: rgba(255,255,255,0.1);
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 
 .main-content {
   flex: 1;
-  padding: 24px;
-  max-width: 1400px;
+  padding: 32px;
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
 }
 
 /* P1 优化：收藏快速访问栏 */
 .favorites-bar {
-  background: linear-gradient(135deg, #fff9e6 0%, #fff 100%);
-  border: 1px solid #ffe58f;
+  background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);
+  border: 1px solid #ffe8b3;
+  border-left: 3px solid #faad14;
   border-radius: 12px;
-  padding: 16px 20px;
+  padding: 20px 24px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(250, 173, 20, 0.1);
+  box-shadow: 0 2px 8px rgba(250, 173, 20, 0.08);
 }
 
 [theme-mode="dark"] .favorites-bar {
-  background: linear-gradient(135deg, rgba(250, 173, 20, 0.15) 0%, rgba(250, 173, 20, 0.05) 100%);
-  border-color: rgba(250, 173, 20, 0.3);
+  background: linear-gradient(135deg, rgba(250, 173, 20, 0.12) 0%, rgba(250, 173, 20, 0.06) 100%);
+  border-color: rgba(250, 173, 20, 0.25);
+  border-left-color: #faad14;
 }
 
 .favorites-header {
   display: flex;
   align-items: center;
-  font-size: 14px;
+  gap: 8px;
+  font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: #999;
   margin-bottom: 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 [theme-mode="dark"] .favorites-header {
-  color: #aaa;
+  color: #888;
 }
 
 .favorites-title {
-  font-size: 16px;
+  font-size: 12px;
 }
 
 .favorites-list {
@@ -1135,11 +1268,11 @@ onUnmounted(() => {
 
 .favorite-item {
   background: white;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
-  padding: 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 14px 16px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1147,17 +1280,19 @@ onUnmounted(() => {
 
 .favorite-item:hover {
   border-color: #1890ff;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
-  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(24, 144, 255, 0.12);
+  transform: translateY(-3px);
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
 }
 
 [theme-mode="dark"] .favorite-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 [theme-mode="dark"] .favorite-item:hover {
   border-color: #1890ff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(24, 144, 255, 0.08) 100%);
 }
 
 .favorite-icon {
@@ -1203,24 +1338,50 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 100px 20px;
+  padding: 80px 20px;
+  text-align: center;
 }
 
-.empty-text {
-  margin: 24px 0;
-  font-size: 16px;
+.empty-icon {
+  color: #dcdcdc;
+  margin-bottom: 24px;
+}
+
+[theme-mode="dark"] .empty-icon {
+  color: #666;
+}
+
+.empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+}
+
+[theme-mode="dark"] .empty-title {
+  color: #e5e5e5;
+}
+
+.empty-desc {
   color: #999;
+  font-size: 14px;
+  margin: 0 0 32px 0;
+  max-width: 400px;
+  line-height: 1.6;
 }
 
 .table-container {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02);
   overflow: hidden;
 }
 
 [theme-mode="dark"] .table-container {
-  background: var(--bg-secondary);
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .secret-table {
@@ -1230,24 +1391,27 @@ onUnmounted(() => {
 }
 
 .secret-table thead {
-  background: #fafafa;
+  background: linear-gradient(to bottom, #fafafa 0%, #f5f5f5 100%);
+  border-bottom: 2px solid #e8e8e8;
 }
 
 [theme-mode="dark"] .secret-table thead {
-  background: rgba(255,255,255,0.05);
+  background: linear-gradient(to bottom, #2a2a2a 0%, #252525 100%);
+  border-bottom-color: #3a3a3a;
 }
 
 .secret-table th {
   padding: 16px;
   text-align: left;
   font-weight: 600;
-  color: #666;
-  border-bottom: 2px solid #e8e8e8;
+  font-size: 12px;
+  color: #999;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 [theme-mode="dark"] .secret-table th {
-  color: #aaa;
-  border-bottom-color: #333;
+  color: #888;
 }
 
 /* 表格列宽定义 */
@@ -1302,16 +1466,43 @@ onUnmounted(() => {
 
 .secret-table td {
   padding: 16px;
+  border-bottom: 1px solid #f5f5f5;
+  vertical-align: middle;
+}
+
+[theme-mode="dark"] .secret-table td {
+  border-bottom-color: #2a2a2a;
+}
+
+.secret-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.secret-table tbody tr:hover {
+  background: linear-gradient(to right, #fafafa 0%, #ffffff 100%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+[theme-mode="dark"] .secret-table tbody tr:hover {
+  background: linear-gradient(to right, #2a2a2a 0%, #272727 100%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .service-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.secret-table tbody tr:hover .service-icon {
+  transform: scale(1.05);
 }
 
 .name-wrapper {
@@ -1380,31 +1571,43 @@ onUnmounted(() => {
 }
 
 .code-display {
-  font-family: 'Courier New', monospace;
-  font-size: 20px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: 2px;
-  color: #1890ff;
+  letter-spacing: 3px;
+  color: #0050b3;
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
   display: inline-block;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  border: 1px solid #bae7ff;
 }
 
 .code-display:hover {
-  background: rgba(24, 144, 255, 0.1);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+  border-color: #91d5ff;
 }
 
 .code-display:active {
   transform: translateY(0);
-  background: rgba(24, 144, 255, 0.15);
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.15);
+}
+
+[theme-mode="dark"] .code-display {
+  color: #4dabf7;
+  background: linear-gradient(135deg, rgba(24, 144, 255, 0.15) 0%, rgba(24, 144, 255, 0.1) 100%);
+  border-color: rgba(24, 144, 255, 0.3);
 }
 
 [theme-mode="dark"] .code-display:hover {
-  background: rgba(24, 144, 255, 0.2);
+  background: linear-gradient(135deg, rgba(24, 144, 255, 0.2) 0%, rgba(24, 144, 255, 0.15) 100%);
+  border-color: rgba(24, 144, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
 }
 
 /* P1 优化：验证码即将过期提醒 */
@@ -1458,18 +1661,38 @@ onUnmounted(() => {
 }
 
 .footer-stats {
-  margin-top: 24px;
-  padding: 16px;
-  background: white;
-  border-radius: 8px;
+  margin-top: 32px;
+  padding: 14px 20px;
+  background: linear-gradient(to right, #fafafa 0%, #ffffff 100%);
+  border-radius: 10px;
   display: flex;
-  justify-content: space-between;
-  color: #666;
-  font-size: 14px;
+  justify-content: center;
+  gap: 32px;
+  color: #999;
+  font-size: 13px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 [theme-mode="dark"] .footer-stats {
-  background: var(--bg-secondary);
+  background: linear-gradient(to right, #2a2a2a 0%, #272727 100%);
+  border-color: #3a3a3a;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.stat-item .t-icon {
+  color: #1890ff;
+}
+
+[theme-mode="dark"] .stat-item .t-icon {
+  color: #4dabf7;
 }
 
 /* 移动端样式 */
@@ -1684,9 +1907,12 @@ onUnmounted(() => {
   }
 
   .footer-stats {
-    flex-direction: column;
-    gap: 8px;
-    text-align: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .stat-item {
+    font-size: 12px;
   }
 }
 </style>

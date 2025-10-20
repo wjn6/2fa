@@ -2,9 +2,12 @@
   <div class="login-container">
     <div class="login-box">
       <div class="login-header">
-        <t-icon name="shield" size="64px" style="color: #1890ff;" />
+        <div class="login-logo">
+          <div class="login-logo-icon">
+            <t-icon name="secured" size="32px" />
+          </div>
+        </div>
         <h1>{{ $t('admin.admin') }}</h1>
-        <p>2FA Notebook Admin Panel</p>
       </div>
 
       <t-form ref="formRef" :data="form" :rules="rules" @submit="handleLogin">
@@ -96,37 +99,76 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f5f5f5;
   padding: 20px;
+}
+
+[theme-mode="dark"] .login-container {
+  background: #1a1a1a;
 }
 
 .login-box {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   background: white;
   border-radius: 16px;
-  padding: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 48px 40px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f0f0;
 }
 
 [theme-mode="dark"] .login-box {
-  background: var(--bg-secondary);
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
+}
+
+.login-logo {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.login-logo-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #0050b3 0%, #1890ff 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.25);
+}
+
+[theme-mode="dark"] .login-logo-icon {
+  background: linear-gradient(135deg, #1890ff 0%, #4dabf7 100%);
+  box-shadow: 0 8px 24px rgba(77, 171, 247, 0.3);
 }
 
 .login-header h1 {
-  margin: 16px 0 8px;
+  margin: 0 0 8px 0;
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: -0.5px;
 }
 
-.login-header p {
-  color: #666;
-  font-size: 14px;
+[theme-mode="dark"] .login-header h1 {
+  color: #ffffff;
+}
+
+.login-subtitle {
+  color: #999;
+  font-size: 13px;
+  margin: 0;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 .login-footer {
