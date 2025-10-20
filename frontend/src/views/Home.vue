@@ -241,15 +241,15 @@ const importMode = ref('merge')
 const fileInputRef = ref(null)
 
 const menuOptions = [
-  { content: '导出数据', value: 'export', prefixIcon: () => <t-icon name="download" /> },
-  { content: '导入数据', value: 'import', prefixIcon: () => <t-icon name="upload" /> },
-  { content: '设置', value: 'settings', prefixIcon: () => <t-icon name="setting" /> }
+  { content: '导出数据', value: 'export' },
+  { content: '导入数据', value: 'import' },
+  { content: '设置', value: 'settings' }
 ]
 
 const getSecretMenu = (secret) => [
-  { content: '编辑', value: 'edit', prefixIcon: () => <t-icon name="edit" /> },
-  { content: secret.is_favorite ? '取消收藏' : '收藏', value: 'favorite', prefixIcon: () => <t-icon name="star" /> },
-  { content: '删除', value: 'delete', prefixIcon: () => <t-icon name="delete" />, theme: 'danger' }
+  { content: '编辑', value: 'edit' },
+  { content: secret.is_favorite ? '取消收藏' : '收藏', value: 'favorite' },
+  { content: '删除', value: 'delete', theme: 'danger' }
 ]
 
 const tokenProgress = computed(() => (tokenRemaining.value / 30) * 100)
