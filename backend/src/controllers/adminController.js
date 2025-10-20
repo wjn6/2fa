@@ -165,7 +165,7 @@ exports.updateSettings = (req, res) => {
 
     const updateStmt = db.prepare(`
       UPDATE system_settings 
-      SET value = ?, updated_at = datetime("now") 
+      SET value = ?, updated_at = datetime('now') 
       WHERE key = ?
     `);
 
@@ -254,7 +254,7 @@ exports.getUsageLogs = (req, res) => {
 // 清理过期会话
 exports.cleanupSessions = (req, res) => {
   try {
-    const result = db.prepare('DELETE FROM sessions WHERE expires_at < datetime("now")').run();
+    const result = db.prepare('DELETE FROM sessions WHERE expires_at < datetime(\'now\')').run();
     
     res.json({ 
       success: true, 

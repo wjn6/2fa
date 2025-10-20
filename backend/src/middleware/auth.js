@@ -48,7 +48,7 @@ function requireUnlocked(req, res, next) {
     return res.status(423).json({ success: false, message: '需要解锁', locked: true });
   }
 
-  const session = db.prepare('SELECT * FROM sessions WHERE session_token = ? AND expires_at > datetime("now")').get(sessionToken);
+  const session = db.prepare('SELECT * FROM sessions WHERE session_token = ? AND expires_at > datetime(\'now\')').get(sessionToken);
   
   if (!session || !session.is_unlocked) {
     return res.status(423).json({ success: false, message: '需要解锁', locked: true });

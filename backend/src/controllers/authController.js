@@ -26,7 +26,7 @@ exports.login = (req, res) => {
     }
 
     // 更新最后登录时间
-    db.prepare('UPDATE users SET last_login = datetime("now") WHERE id = ?').run(user.id);
+    db.prepare('UPDATE users SET last_login = datetime(\'now\') WHERE id = ?').run(user.id);
 
     const token = generateToken(user.id);
 
@@ -168,7 +168,7 @@ exports.changeMasterPassword = (req, res) => {
 
     db.prepare(`
       UPDATE master_password 
-      SET password_hash = ?, salt = ?, hint = ?, updated_at = datetime("now") 
+      SET password_hash = ?, salt = ?, hint = ?, updated_at = datetime('now') 
       WHERE id = ?
     `).run(newPasswordHash, newSalt, hint || '', masterPassword.id);
 

@@ -169,7 +169,7 @@ exports.updateSecret = (req, res) => {
     const result = db.prepare(`
       UPDATE secrets 
       SET name = ?, secret_key = ?, issuer = ?, category_id = ?, note = ?, 
-          icon = ?, icon_type = ?, is_favorite = ?, is_pinned = ?, updated_at = datetime("now")
+          icon = ?, icon_type = ?, is_favorite = ?, is_pinned = ?, updated_at = datetime('now')
       WHERE id = ?
     `).run(
       name, 
@@ -257,7 +257,7 @@ exports.batchUpdateCategory = (req, res) => {
 
     const placeholders = ids.map(() => '?').join(',');
     const result = db.prepare(`
-      UPDATE secrets SET category_id = ?, updated_at = datetime("now") 
+      UPDATE secrets SET category_id = ?, updated_at = datetime('now') 
       WHERE id IN (${placeholders})
     `).run(category_id || null, ...ids);
 
@@ -299,7 +299,7 @@ exports.toggleFavorite = (req, res) => {
     }
 
     const newFavorite = secret.is_favorite ? 0 : 1;
-    db.prepare('UPDATE secrets SET is_favorite = ?, updated_at = datetime("now") WHERE id = ?').run(newFavorite, id);
+    db.prepare('UPDATE secrets SET is_favorite = ?, updated_at = datetime(\'now\') WHERE id = ?').run(newFavorite, id);
 
     res.json({ success: true, data: { is_favorite: newFavorite } });
   } catch (error) {
@@ -318,7 +318,7 @@ exports.togglePin = (req, res) => {
     }
 
     const newPinned = secret.is_pinned ? 0 : 1;
-    db.prepare('UPDATE secrets SET is_pinned = ?, updated_at = datetime("now") WHERE id = ?').run(newPinned, id);
+    db.prepare('UPDATE secrets SET is_pinned = ?, updated_at = datetime(\'now\') WHERE id = ?').run(newPinned, id);
 
     res.json({ success: true, data: { is_pinned: newPinned } });
   } catch (error) {
@@ -347,7 +347,7 @@ exports.generateToken = (req, res) => {
     // 更新使用统计
     db.prepare(`
       UPDATE secrets 
-      SET use_count = use_count + 1, last_used_at = datetime("now") 
+      SET use_count = use_count + 1, last_used_at = datetime('now') 
       WHERE id = ?
     `).run(id);
 
