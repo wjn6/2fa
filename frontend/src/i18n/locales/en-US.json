@@ -56,9 +56,20 @@
     "batchOperation": "Batch Operation",
     "batchDelete": "Batch Delete",
     "batchMove": "Batch Move",
+    "batchExport": "Batch Export",
     "selectAll": "Select All",
     "unselectAll": "Unselect All",
-    "selected": "Selected"
+    "selected": "Selected",
+    "batchMode": "Batch Mode",
+    "exitBatchMode": "Exit Batch",
+    "enterBatchMode": "Batch",
+    "exportSelected": "Export Selected",
+    "deleteSelected": "Delete Selected",
+    "selectedCount": "{count} selected",
+    "batchDeleteConfirm": "Are you sure you want to delete {count} secrets? This action cannot be undone!",
+    "batchDeleteSuccess": "Successfully deleted {count} secrets",
+    "batchExportSuccess": "Successfully exported {count} secrets",
+    "pleaseSelectFirst": "Please select secrets first"
   },
   "category": {
     "categories": "Categories",

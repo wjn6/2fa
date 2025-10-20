@@ -56,9 +56,20 @@
     "batchOperation": "批量操作",
     "batchDelete": "批量删除",
     "batchMove": "批量移动",
+    "batchExport": "批量导出",
     "selectAll": "全选",
     "unselectAll": "取消全选",
-    "selected": "已选择"
+    "selected": "已选择",
+    "batchMode": "批量模式",
+    "exitBatchMode": "退出批量",
+    "enterBatchMode": "批量",
+    "exportSelected": "导出选中",
+    "deleteSelected": "删除选中",
+    "selectedCount": "已选择 {count} 项",
+    "batchDeleteConfirm": "确定要删除选中的 {count} 个密钥吗？此操作不可恢复！",
+    "batchDeleteSuccess": "成功删除 {count} 个密钥",
+    "batchExportSuccess": "成功导出 {count} 个密钥",
+    "pleaseSelectFirst": "请先选择要操作的密钥"
   },
   "category": {
     "categories": "分类",

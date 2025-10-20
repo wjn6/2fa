@@ -15,17 +15,68 @@
         >
           <template #prefix-icon><t-icon name="search" /></template>
         </t-input>
-        <t-button theme="primary" @click="showAddDialog">
+        <t-button 
+          v-if="!batchMode" 
+          theme="primary" 
+          @click="showAddDialog"
+        >
           <template #icon><t-icon name="add" /></template>
           <span class="btn-text">添加</span>
         </t-button>
-        <t-dropdown :options="menuOptions" @click="handleMenu">
+        <t-button 
+          v-if="!batchMode && filteredSecrets.length > 0"
+          variant="outline" 
+          @click="enterBatchMode"
+        >
+          <template #icon><t-icon name="check-circle" /></template>
+          <span class="btn-text">批量</span>
+        </t-button>
+        <t-button 
+          v-if="batchMode"
+          theme="danger"
+          @click="exitBatchMode"
+        >
+          取消
+        </t-button>
+        <t-dropdown v-if="!batchMode" :options="menuOptions" @click="handleMenu">
           <t-button variant="outline">
             <t-icon name="ellipsis" />
           </t-button>
         </t-dropdown>
-        <t-button variant="outline" @click="handleLock">
+        <t-button v-if="!batchMode" variant="outline" @click="handleLock">
           <t-icon name="lock-on" />
+        </t-button>
+      </div>
+    </div>
+
+    <!-- 批量操作工具栏 -->
+    <div v-if="batchMode && filteredSecrets.length > 0" class="batch-toolbar">
+      <div class="batch-toolbar-left">
+        <t-checkbox 
+          v-model="selectAll" 
+          @change="handleSelectAll"
+        >
+          全选
+        </t-checkbox>
+        <span class="selected-count">已选择 {{ selectedIds.length }} 项</span>
+      </div>
+      <div class="batch-toolbar-right">
+        <t-button 
+          theme="primary" 
+          variant="outline"
+          :disabled="selectedIds.length === 0"
+          @click="batchExport"
+        >
+          <template #icon><t-icon name="download" /></template>
+          导出选中
+        </t-button>
+        <t-button 
+          theme="danger"
+          :disabled="selectedIds.length === 0"
+          @click="batchDelete"
+        >
+          <template #icon><t-icon name="delete" /></template>
+          删除选中
         </t-button>
       </div>
     </div>
@@ -50,16 +101,34 @@
         <table class="secret-table">
           <thead>
             <tr>
+              <th v-if="batchMode" width="5%">
+                <t-checkbox 
+                  v-model="selectAll" 
+                  @change="handleSelectAll"
+                />
+              </th>
               <th width="5%"></th>
-              <th width="25%">服务/名称</th>
-              <th width="20%">发行者</th>
-              <th width="20%">验证码</th>
-              <th width="20%">剩余时间</th>
-              <th width="10%">操作</th>
+              <th width="15%">服务/名称</th>
+              <th width="15%">发行者</th>
+              <th width="20%">密钥</th>
+              <th width="15%">验证码</th>
+              <th width="15%">剩余时间</th>
+              <th width="15%">操作</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="secret in filteredSecrets" :key="secret.id" class="secret-row">
+            <tr 
+              v-for="secret in filteredSecrets" 
+              :key="secret.id" 
+              class="secret-row"
+              :class="{ 'selected-row': selectedIds.includes(secret.id) }"
+            >
+              <td v-if="batchMode" class="checkbox-cell">
+                <t-checkbox 
+                  :checked="selectedIds.includes(secret.id)"
+                  @change="toggleSelect(secret.id)"
+                />
+              </td>
               <td class="icon-cell">
                 <div class="service-icon" :style="{ backgroundColor: getServiceColor(secret) }">
                   {{ getServiceEmoji(secret) }}
@@ -73,6 +142,31 @@
               </td>
               <td class="issuer-cell">
                 <span class="issuer">{{ secret.issuer || '-' }}</span>
+              </td>
+              <td class="secret-key-cell">
+                <div class="secret-key-wrapper">
+                  <span class="secret-key-text">
+                    {{ visibleSecretKeys.has(secret.id) ? secret.secret_key : '••••••••••••••••' }}
+                  </span>
+                  <div class="secret-key-actions">
+                    <t-button 
+                      size="small" 
+                      variant="text" 
+                      @click="toggleSecretKeyVisibility(secret.id)"
+                      :title="visibleSecretKeys.has(secret.id) ? '隐藏密钥' : '显示密钥'"
+                    >
+                      <t-icon :name="visibleSecretKeys.has(secret.id) ? 'browse-off' : 'browse'" />
+                    </t-button>
+                    <t-button 
+                      size="small" 
+                      variant="text" 
+                      @click="copySecretKey(secret.secret_key)"
+                      title="复制密钥"
+                    >
+                      <t-icon name="file-copy" />
+                    </t-button>
+                  </div>
+                </div>
               </td>
               <td class="code-cell">
                 <div class="code-display">{{ formatToken(getToken(secret.id)) }}</div>
@@ -90,7 +184,7 @@
                 </div>
               </td>
               <td class="action-cell">
-                <t-space size="small">
+                <t-space v-if="!batchMode" size="small">
                   <t-button size="small" theme="primary" variant="outline" @click="copyToken(secret.id)">
                     <t-icon name="file-copy" />
                   </t-button>
@@ -100,6 +194,7 @@
                     </t-button>
                   </t-dropdown>
                 </t-space>
+                <span v-else style="color: #999;">批量模式</span>
               </td>
             </tr>
           </tbody>
@@ -108,8 +203,19 @@
 
       <!-- 移动端列表 -->
       <div v-if="!loading && filteredSecrets.length > 0" class="mobile-view">
-        <div v-for="secret in filteredSecrets" :key="secret.id" class="mobile-card">
+        <div 
+          v-for="secret in filteredSecrets" 
+          :key="secret.id" 
+          class="mobile-card"
+          :class="{ 'selected-card': selectedIds.includes(secret.id) }"
+        >
           <div class="mobile-card-header">
+            <t-checkbox 
+              v-if="batchMode"
+              :checked="selectedIds.includes(secret.id)"
+              @change="toggleSelect(secret.id)"
+              style="margin-right: 12px;"
+            />
             <div class="mobile-card-title">
               <div class="service-icon-mobile" :style="{ backgroundColor: getServiceColor(secret) }">
                 {{ getServiceEmoji(secret) }}
@@ -129,11 +235,36 @@
             </t-dropdown>
           </div>
           
+          <div class="mobile-card-secret">
+            <div class="mobile-secret-label">密钥</div>
+            <div class="mobile-secret-value">
+              <span class="mobile-secret-text">
+                {{ visibleSecretKeys.has(secret.id) ? secret.secret_key : '••••••••••••••••' }}
+              </span>
+              <div class="mobile-secret-actions">
+                <t-button 
+                  size="small" 
+                  variant="text" 
+                  @click="toggleSecretKeyVisibility(secret.id)"
+                >
+                  <t-icon :name="visibleSecretKeys.has(secret.id) ? 'browse-off' : 'browse'" />
+                </t-button>
+                <t-button 
+                  size="small" 
+                  variant="text" 
+                  @click="copySecretKey(secret.secret_key)"
+                >
+                  <t-icon name="file-copy" />
+                </t-button>
+              </div>
+            </div>
+          </div>
+
           <div class="mobile-card-code">
             <div class="mobile-code-display">{{ formatToken(getToken(secret.id)) }}</div>
             <t-button theme="primary" size="large" block @click="copyToken(secret.id)">
               <template #icon><t-icon name="file-copy" /></template>
-              复制
+              复制验证码
             </t-button>
           </div>
 
@@ -206,6 +337,40 @@
         </t-form-item>
       </t-form>
     </t-dialog>
+
+    <!-- 二维码上传对话框 -->
+    <t-dialog
+      v-model:visible="qrUploadDialogVisible"
+      header="扫描二维码"
+      :width="isMobile ? '90%' : '500px'"
+      :footer="false"
+    >
+      <div style="text-align: center;">
+        <div v-if="qrImageData" style="margin-bottom: 16px;">
+          <img :src="qrImageData" style="max-width: 100%; max-height: 300px; border-radius: 8px;" />
+        </div>
+        <t-upload
+          theme="image"
+          accept="image/*"
+          :auto-upload="false"
+          @change="handleQRUpload"
+          tips="支持 JPG、PNG 格式的二维码图片"
+        >
+          <template #trigger>
+            <t-button theme="primary" size="large">
+              <template #icon><t-icon name="upload" /></template>
+              选择二维码图片
+            </t-button>
+          </template>
+        </t-upload>
+        <div style="margin-top: 16px; color: #999; font-size: 13px;">
+          <p>提示：</p>
+          <p>1. 从2FA服务商获取二维码</p>
+          <p>2. 截图或保存二维码图片</p>
+          <p>3. 上传图片自动解析密钥</p>
+        </div>
+      </div>
+    </t-dialog>
   </div>
 </template>
 
@@ -214,7 +379,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { MessagePlugin } from 'tdesign-vue-next'
 import { useAppStore } from '../stores/app'
-import { secretApi, backupApi } from '../api'
+import { secretApi, backupApi, qrcodeApi } from '../api'
 import { useKeyboard } from '../composables/useKeyboard'
 
 const router = useRouter()
@@ -231,6 +396,13 @@ const secrets = ref([])
 const tokens = ref({})
 const tokenRemaining = ref(30)
 const searchKeyword = ref('')
+
+// 批量操作相关
+const selectedIds = ref([])
+const batchMode = ref(false)
+
+// 密钥显示相关
+const visibleSecretKeys = ref(new Set())
 
 const secretDialogVisible = ref(false)
 const secretDialogTitle = ref('添加密钥')
@@ -251,6 +423,18 @@ const getSecretMenu = (secret) => [
   { content: secret.is_favorite ? '取消收藏' : '收藏', value: 'favorite' },
   { content: '删除', value: 'delete', theme: 'danger' }
 ]
+
+// 批量操作相关计算属性
+const selectAll = computed({
+  get: () => selectedIds.value.length === filteredSecrets.value.length && filteredSecrets.value.length > 0,
+  set: (val) => {
+    if (val) {
+      selectedIds.value = filteredSecrets.value.map(s => s.id)
+    } else {
+      selectedIds.value = []
+    }
+  }
+})
 
 const tokenProgress = computed(() => (tokenRemaining.value / 30) * 100)
 
@@ -349,7 +533,10 @@ const loadTokens = async () => {
     tokens.value = newTokens
     tokenRemaining.value = res.data.data[0]?.remaining || 30
   } catch (error) {
-    console.error(error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('加载验证码失败:', error)
+    }
+    // 静默失败，避免干扰用户体验
   }
 }
 
@@ -378,8 +565,42 @@ const showAddDialog = () => {
   secretDialogVisible.value = true
 }
 
+const qrUploadDialogVisible = ref(false)
+const qrImageData = ref('')
+
 const showQRUpload = () => {
-  MessagePlugin.info('二维码上传功能开发中...')
+  qrUploadDialogVisible.value = true
+}
+
+const handleQRUpload = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    try {
+      qrImageData.value = e.target.result
+      
+      // 调用后端解析二维码
+      const res = await qrcodeApi.upload({ image: e.target.result })
+      
+      if (res.data.success) {
+        const data = res.data.data
+        // 自动填充表单
+        secretForm.value = {
+          name: data.name || '',
+          secret_key: data.secret || '',
+          issuer: data.issuer || '',
+          note: ''
+        }
+        MessagePlugin.success('二维码解析成功')
+        qrUploadDialogVisible.value = false
+      }
+    } catch (error) {
+      MessagePlugin.error('二维码解析失败：' + (error.response?.data?.message || error.message))
+    }
+  }
+  reader.readAsDataURL(file)
 }
 
 const handleSecretSubmit = async () => {
@@ -461,6 +682,104 @@ const handleMenu = async (data) => {
 const handleLock = () => {
   appStore.lock()
   router.push('/unlock')
+}
+
+// 密钥显示/隐藏相关函数
+const toggleSecretKeyVisibility = (secretId) => {
+  if (visibleSecretKeys.value.has(secretId)) {
+    visibleSecretKeys.value.delete(secretId)
+  } else {
+    visibleSecretKeys.value.add(secretId)
+  }
+  // 触发响应式更新
+  visibleSecretKeys.value = new Set(visibleSecretKeys.value)
+}
+
+const copySecretKey = async (secretKey) => {
+  try {
+    await navigator.clipboard.writeText(secretKey)
+    MessagePlugin.success('密钥已复制到剪贴板')
+  } catch (error) {
+    MessagePlugin.error('复制失败：' + error.message)
+  }
+}
+
+// 批量操作函数
+const enterBatchMode = () => {
+  batchMode.value = true
+  selectedIds.value = []
+}
+
+const exitBatchMode = () => {
+  batchMode.value = false
+  selectedIds.value = []
+}
+
+const toggleSelect = (id) => {
+  const index = selectedIds.value.indexOf(id)
+  if (index > -1) {
+    selectedIds.value.splice(index, 1)
+  } else {
+    selectedIds.value.push(id)
+  }
+}
+
+const handleSelectAll = (checked) => {
+  if (checked) {
+    selectedIds.value = filteredSecrets.value.map(s => s.id)
+  } else {
+    selectedIds.value = []
+  }
+}
+
+const batchDelete = async () => {
+  if (selectedIds.value.length === 0) {
+    MessagePlugin.warning('请先选择要删除的密钥')
+    return
+  }
+
+  const confirmed = confirm(`确定要删除选中的 ${selectedIds.value.length} 个密钥吗？此操作不可恢复！`)
+  if (!confirmed) return
+
+  try {
+    await secretApi.batchDelete(selectedIds.value)
+    MessagePlugin.success(`成功删除 ${selectedIds.value.length} 个密钥`)
+    loadSecrets()
+    loadTokens()
+    exitBatchMode()
+  } catch (error) {
+    MessagePlugin.error('批量删除失败：' + (error.response?.data?.message || error.message))
+  }
+}
+
+const batchExport = () => {
+  if (selectedIds.value.length === 0) {
+    MessagePlugin.warning('请先选择要导出的密钥')
+    return
+  }
+
+  try {
+    const selectedSecrets = secrets.value.filter(s => selectedIds.value.includes(s.id))
+    
+    const exportData = {
+      version: '2.0.0',
+      timestamp: new Date().toISOString(),
+      count: selectedSecrets.length,
+      secrets: selectedSecrets
+    }
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `2fa-selected-${selectedSecrets.length}-${Date.now()}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+    
+    MessagePlugin.success(`成功导出 ${selectedSecrets.length} 个密钥`)
+  } catch (error) {
+    MessagePlugin.error('导出失败：' + error.message)
+  }
 }
 
 const handleFileSelect = (event) => {
@@ -561,6 +880,60 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.batch-toolbar {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 12px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+
+[theme-mode="dark"] .batch-toolbar {
+  background: rgba(255, 193, 7, 0.15);
+  border-left-color: #ffc107;
+}
+
+.batch-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.selected-count {
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+[theme-mode="dark"] .selected-count {
+  color: #aaa;
+}
+
+.batch-toolbar-right {
+  display: flex;
+  gap: 12px;
+}
+
+.checkbox-cell {
+  padding: 16px 12px !important;
+}
+
+.selected-row {
+  background: #e6f7ff !important;
+}
+
+[theme-mode="dark"] .selected-row {
+  background: rgba(24, 144, 255, 0.1) !important;
+}
+
+.selected-card {
+  border: 2px solid #1890ff !important;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2) !important;
 }
 
 .search-input {
@@ -672,6 +1045,56 @@ onUnmounted(() => {
   font-size: 13px;
 }
 
+[theme-mode="dark"] .issuer {
+  color: #999;
+}
+
+.secret-key-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.secret-key-text {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: #666;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 100px;
+}
+
+[theme-mode="dark"] .secret-key-text {
+  color: #aaa;
+}
+
+.secret-key-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.secret-key-actions .t-button {
+  padding: 2px;
+  min-width: unset;
+}
+
+.secret-key-actions .t-icon {
+  font-size: 16px;
+  color: #666;
+  transition: color 0.2s;
+}
+
+[theme-mode="dark"] .secret-key-actions .t-icon {
+  color: #aaa;
+}
+
+.secret-key-actions .t-button:hover .t-icon {
+  color: #1890ff;
+}
+
 .code-display {
   font-family: 'Courier New', monospace;
   font-size: 20px;
@@ -761,6 +1184,67 @@ onUnmounted(() => {
   margin-top: 4px;
 }
 
+.mobile-card-secret {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+[theme-mode="dark"] .mobile-card-secret {
+  background: rgba(255,255,255,0.05);
+}
+
+.mobile-secret-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.mobile-secret-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-secret-text {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: #666;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+}
+
+[theme-mode="dark"] .mobile-secret-text {
+  color: #aaa;
+}
+
+.mobile-secret-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mobile-secret-actions .t-button {
+  padding: 4px;
+  min-width: unset;
+}
+
+.mobile-secret-actions .t-icon {
+  font-size: 18px;
+  color: #666;
+}
+
+[theme-mode="dark"] .mobile-secret-actions .t-icon {
+  color: #aaa;
+}
+
+.mobile-secret-actions .t-button:hover .t-icon {
+  color: #1890ff;
+}
+
 .mobile-card-code {
   text-align: center;
   margin-bottom: 12px;
@@ -788,7 +1272,7 @@ onUnmounted(() => {
 }
 
 /* 响应式 */
-@media (max-width: 768px) {
+  @media (max-width: 768px) {
   .header {
     padding: 12px 16px;
     flex-wrap: wrap;
@@ -812,6 +1296,22 @@ onUnmounted(() => {
 
   .btn-text {
     display: none;
+  }
+
+  .batch-toolbar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .batch-toolbar-left,
+  .batch-toolbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .batch-toolbar-right {
+    flex-wrap: wrap;
   }
 
   .logo-text {
