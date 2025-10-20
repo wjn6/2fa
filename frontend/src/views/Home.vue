@@ -83,6 +83,31 @@
 
     <!-- 主内容区 -->
     <div class="main-content">
+      <!-- P1 优化：收藏快速访问栏 -->
+      <div v-if="!loading && favoriteSecrets.length > 0" class="favorites-bar">
+        <div class="favorites-header">
+          <t-icon name="star-filled" style="color: #faad14; margin-right: 8px;" />
+          <span class="favorites-title">常用密钥</span>
+        </div>
+        <div class="favorites-list">
+          <div 
+            v-for="secret in favoriteSecrets" 
+            :key="secret.id"
+            class="favorite-item"
+            @click="copyToken(secret.id)"
+            :title="`点击复制 ${secret.name} 的验证码`"
+          >
+            <div class="favorite-icon" :style="{ backgroundColor: getServiceColor(secret) }">
+              {{ getServiceEmoji(secret) }}
+            </div>
+            <div class="favorite-info">
+              <div class="favorite-name">{{ secret.name }}</div>
+              <div class="favorite-token">{{ formatToken(getToken(secret.id)) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 空状态 -->
       <div v-if="!loading && filteredSecrets.length === 0" class="empty-state">
         <t-icon name="inbox" size="80px" style="color: #dcdcdc;" />
@@ -101,19 +126,14 @@
         <table class="secret-table">
           <thead>
             <tr>
-              <th v-if="batchMode" width="5%">
-                <t-checkbox 
-                  v-model="selectAll" 
-                  @change="handleSelectAll"
-                />
-              </th>
-              <th width="5%"></th>
-              <th width="15%">服务/名称</th>
-              <th width="15%">发行者</th>
-              <th width="20%">密钥</th>
-              <th width="15%">验证码</th>
-              <th width="15%">剩余时间</th>
-              <th width="15%">操作</th>
+              <th v-if="batchMode" class="checkbox-col"></th>
+              <th class="icon-col"></th>
+              <th class="name-col">服务/名称</th>
+              <th class="issuer-col">发行者</th>
+              <th class="key-col">密钥</th>
+              <th class="code-col">验证码</th>
+              <th class="timer-col">剩余时间</th>
+              <th class="action-col">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -169,7 +189,17 @@
                 </div>
               </td>
               <td class="code-cell">
-                <div class="code-display">{{ formatToken(getToken(secret.id)) }}</div>
+                <div 
+                  class="code-display" 
+                  :class="{ 
+                    'code-expiring': tokenRemaining <= 5,
+                    'copied-animation': recentlyCopied === secret.id 
+                  }"
+                  @click="copyToken(secret.id)" 
+                  :title="tokenRemaining <= 5 ? '验证码即将过期！' : '点击复制验证码'"
+                >
+                  {{ formatToken(getToken(secret.id)) }}
+                </div>
               </td>
               <td class="timer-cell">
                 <div class="timer-wrapper">
@@ -404,6 +434,14 @@ const batchMode = ref(false)
 // 密钥显示相关 - 使用数组而不是 Set，确保响应式
 const visibleSecretIds = ref([])
 
+// P1 优化：复制成功反馈
+const recentlyCopied = ref(null)
+
+// P1 优化：收藏密钥快速访问
+const favoriteSecrets = computed(() => 
+  secrets.value.filter(s => s.is_favorite).slice(0, 5)
+)
+
 const secretDialogVisible = ref(false)
 const secretDialogTitle = ref('添加密钥')
 const secretForm = ref({ name: '', secret_key: '', issuer: '', note: '' })
@@ -515,7 +553,26 @@ const loadSecrets = async () => {
   loading.value = true
   try {
     const res = await secretApi.getAll()
-    secrets.value = res.data.data
+    
+    // P1 优化：数据格式验证
+    if (!Array.isArray(res.data.data)) {
+      throw new Error('数据格式错误')
+    }
+    
+    // 验证每个密钥的必需字段
+    const validSecrets = res.data.data.filter(secret => {
+      if (!secret.id || !secret.name || !secret.secret_key) {
+        console.warn('发现无效密钥:', secret)
+        return false
+      }
+      return true
+    })
+    
+    if (validSecrets.length < res.data.data.length) {
+      MessagePlugin.warning(`发现 ${res.data.data.length - validSecrets.length} 个无效密钥已被过滤`)
+    }
+    
+    secrets.value = validSecrets
   } catch (error) {
     MessagePlugin.error('加载失败：' + error.message)
   } finally {
@@ -551,11 +608,55 @@ const copyToken = async (id) => {
   const token = tokens.value[id]
   if (token && token !== '------') {
     try {
-      await navigator.clipboard.writeText(token)
-      MessagePlugin.success('已复制到剪贴板')
+      // 优先使用 Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(token)
+        MessagePlugin.success('验证码已复制（30秒后自动清除）')
+      } else {
+        // 回退方案：使用 textarea
+        const textarea = document.createElement('textarea')
+        textarea.value = token
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        try {
+          const successful = document.execCommand('copy')
+          if (successful) {
+            MessagePlugin.success('验证码已复制（30秒后自动清除）')
+          } else {
+            throw new Error('复制命令执行失败')
+          }
+        } finally {
+          document.body.removeChild(textarea)
+        }
+      }
+      
+      // P1 优化：复制成功视觉反馈
+      recentlyCopied.value = id
+      setTimeout(() => {
+        recentlyCopied.value = null
+      }, 1000)
+      
+      // P1 优化：30秒后自动清空剪贴板
+      setTimeout(async () => {
+        try {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            const currentClip = await navigator.clipboard.readText()
+            if (currentClip === token) {
+              await navigator.clipboard.writeText('')
+            }
+          }
+        } catch (e) {
+          // 某些浏览器不允许读取剪贴板，忽略错误
+        }
+      }, 30000)
+      
     } catch (error) {
-      MessagePlugin.error('复制失败')
+      MessagePlugin.error('复制失败：' + error.message)
     }
+  } else {
+    MessagePlugin.warning('验证码还未生成，请稍候')
   }
 }
 
@@ -665,6 +766,10 @@ const handleMenu = async (data) => {
         link.download = `2fa-backup-${Date.now()}.json`
         link.click()
         URL.revokeObjectURL(url)
+        
+        // P1 优化：记录备份时间
+        localStorage.setItem('last_backup_time', Date.now().toString())
+        
         MessagePlugin.success('导出成功')
       } catch (error) {
         MessagePlugin.error('导出失败')
@@ -840,11 +945,31 @@ useKeyboard({
   onLock: handleLock
 })
 
+// P1 优化：检查备份状态
+const checkBackupStatus = () => {
+  const lastBackup = localStorage.getItem('last_backup_time')
+  if (!lastBackup) return
+  
+  const days = (Date.now() - parseInt(lastBackup)) / (1000 * 60 * 60 * 24)
+  
+  if (days > 7) {
+    setTimeout(() => {
+      MessagePlugin.warning({
+        content: `您已经 ${Math.floor(days)} 天没有备份数据了，建议立即备份`,
+        duration: 8000
+      })
+    }, 2000) // 延迟2秒显示，避免干扰加载
+  }
+}
+
 let timer = null
 
 onMounted(() => {
   loadSecrets()
   loadTokens()
+  
+  // P1 优化：检查备份状态
+  checkBackupStatus()
   
   timer = setInterval(() => {
     tokenRemaining.value--
@@ -970,6 +1095,109 @@ onUnmounted(() => {
   width: 100%;
 }
 
+/* P1 优化：收藏快速访问栏 */
+.favorites-bar {
+  background: linear-gradient(135deg, #fff9e6 0%, #fff 100%);
+  border: 1px solid #ffe58f;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(250, 173, 20, 0.1);
+}
+
+[theme-mode="dark"] .favorites-bar {
+  background: linear-gradient(135deg, rgba(250, 173, 20, 0.15) 0%, rgba(250, 173, 20, 0.05) 100%);
+  border-color: rgba(250, 173, 20, 0.3);
+}
+
+.favorites-header {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+[theme-mode="dark"] .favorites-header {
+  color: #aaa;
+}
+
+.favorites-title {
+  font-size: 16px;
+}
+
+.favorites-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.favorite-item {
+  background: white;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.favorite-item:hover {
+  border-color: #1890ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+[theme-mode="dark"] .favorite-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[theme-mode="dark"] .favorite-item:hover {
+  border-color: #1890ff;
+}
+
+.favorite-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.favorite-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.favorite-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+
+[theme-mode="dark"] .favorite-name {
+  color: #ddd;
+}
+
+.favorite-token {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1890ff;
+  letter-spacing: 1px;
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -998,6 +1226,7 @@ onUnmounted(() => {
 .secret-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .secret-table thead {
@@ -1019,6 +1248,39 @@ onUnmounted(() => {
 [theme-mode="dark"] .secret-table th {
   color: #aaa;
   border-bottom-color: #333;
+}
+
+/* 表格列宽定义 */
+.checkbox-col {
+  width: 50px;
+}
+
+.icon-col {
+  width: 60px;
+}
+
+.name-col {
+  width: 200px;
+}
+
+.issuer-col {
+  width: 150px;
+}
+
+.key-col {
+  width: 200px;
+}
+
+.code-col {
+  width: 150px;
+}
+
+.timer-col {
+  width: 180px;
+}
+
+.action-col {
+  width: 120px;
 }
 
 .secret-row {
@@ -1123,6 +1385,65 @@ onUnmounted(() => {
   font-weight: 700;
   letter-spacing: 2px;
   color: #1890ff;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: inline-block;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.code-display:hover {
+  background: rgba(24, 144, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.code-display:active {
+  transform: translateY(0);
+  background: rgba(24, 144, 255, 0.15);
+}
+
+[theme-mode="dark"] .code-display:hover {
+  background: rgba(24, 144, 255, 0.2);
+}
+
+/* P1 优化：验证码即将过期提醒 */
+.code-expiring {
+  animation: pulse 0.5s ease-in-out infinite;
+  color: #ff4d4f !important;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scale(1.02);
+  }
+}
+
+/* P1 优化：复制成功动画 */
+.copied-animation {
+  animation: copied-flash 0.6s ease;
+}
+
+@keyframes copied-flash {
+  0% { 
+    background: transparent;
+    transform: scale(1);
+  }
+  20% { 
+    background: #52c41a;
+    color: white;
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(82, 196, 26, 0.4);
+  }
+  100% { 
+    background: transparent;
+    transform: scale(1);
+  }
 }
 
 .timer-wrapper {
@@ -1295,6 +1616,16 @@ onUnmounted(() => {
 
 /* 响应式 */
   @media (max-width: 768px) {
+  /* 收藏栏移动端适配 */
+  .favorites-bar {
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  
+  .favorites-list {
+    grid-template-columns: 1fr;
+  }
+
   .header {
     padding: 12px 16px;
     flex-wrap: wrap;

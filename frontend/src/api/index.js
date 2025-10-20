@@ -34,8 +34,24 @@ api.interceptors.response.use(
   (response) => {
     return response
   },
-  (error) => {
+  async (error) => {
     const appStore = useAppStore()
+    const config = error.config
+    
+    // P1 优化：网络错误自动重试
+    if (!error.response && config && !config._retry) {
+      config._retry = (config._retry || 0) + 1
+      
+      // 最多重试3次
+      if (config._retry <= 3) {
+        MessagePlugin.warning(`网络错误，正在重试（${config._retry}/3）...`)
+        
+        // 等待 1 秒后重试
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        return api(config)
+      }
+    }
     
     if (error.response) {
       // 需要解锁
@@ -53,6 +69,7 @@ api.interceptors.response.use(
         MessagePlugin.error(error.response.data.message)
       }
     } else if (error.request) {
+      // 重试3次后仍然失败
       MessagePlugin.error('网络错误，请检查连接')
     } else {
       MessagePlugin.error('请求失败')
