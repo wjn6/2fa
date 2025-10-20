@@ -55,13 +55,9 @@ exports.getAllSecrets = (req, res) => {
 
     const secrets = db.prepare(query).all(...params);
     
-    // 如果启用加密，不返回原始密钥，只返回基本信息
-    const safeSecrets = secrets.map(s => ({
-      ...s,
-      secret_key: '***encrypted***' // 前端需要时单独请求解密
-    }));
-    
-    res.json({ success: true, data: safeSecrets });
+    // 直接返回密钥列表
+    // 注意：密钥在数据库中以明文存储（或已加密状态）
+    res.json({ success: true, data: secrets });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

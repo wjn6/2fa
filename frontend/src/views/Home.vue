@@ -146,16 +146,16 @@
               <td class="secret-key-cell">
                 <div class="secret-key-wrapper">
                   <span class="secret-key-text">
-                    {{ visibleSecretKeys.has(secret.id) ? secret.secret_key : '••••••••••••••••' }}
+                    {{ visibleSecretIds.includes(secret.id) ? secret.secret_key : '••••••••••••••••' }}
                   </span>
                   <div class="secret-key-actions">
                     <t-button 
                       size="small" 
                       variant="text" 
                       @click="toggleSecretKeyVisibility(secret.id)"
-                      :title="visibleSecretKeys.has(secret.id) ? '隐藏密钥' : '显示密钥'"
+                      :title="visibleSecretIds.includes(secret.id) ? '隐藏密钥' : '显示密钥'"
                     >
-                      <t-icon :name="visibleSecretKeys.has(secret.id) ? 'browse-off' : 'browse'" />
+                      <t-icon :name="visibleSecretIds.includes(secret.id) ? 'browse-off' : 'browse'" />
                     </t-button>
                     <t-button 
                       size="small" 
@@ -239,7 +239,7 @@
             <div class="mobile-secret-label">密钥</div>
             <div class="mobile-secret-value">
               <span class="mobile-secret-text">
-                {{ visibleSecretKeys.has(secret.id) ? secret.secret_key : '••••••••••••••••' }}
+                {{ visibleSecretIds.includes(secret.id) ? secret.secret_key : '••••••••••••••••' }}
               </span>
               <div class="mobile-secret-actions">
                 <t-button 
@@ -247,7 +247,7 @@
                   variant="text" 
                   @click="toggleSecretKeyVisibility(secret.id)"
                 >
-                  <t-icon :name="visibleSecretKeys.has(secret.id) ? 'browse-off' : 'browse'" />
+                  <t-icon :name="visibleSecretIds.includes(secret.id) ? 'browse-off' : 'browse'" />
                 </t-button>
                 <t-button 
                   size="small" 
@@ -401,8 +401,8 @@ const searchKeyword = ref('')
 const selectedIds = ref([])
 const batchMode = ref(false)
 
-// 密钥显示相关
-const visibleSecretKeys = ref(new Set())
+// 密钥显示相关 - 使用数组而不是 Set，确保响应式
+const visibleSecretIds = ref([])
 
 const secretDialogVisible = ref(false)
 const secretDialogTitle = ref('添加密钥')
@@ -686,19 +686,41 @@ const handleLock = () => {
 
 // 密钥显示/隐藏相关函数
 const toggleSecretKeyVisibility = (secretId) => {
-  if (visibleSecretKeys.value.has(secretId)) {
-    visibleSecretKeys.value.delete(secretId)
+  const index = visibleSecretIds.value.indexOf(secretId)
+  if (index > -1) {
+    // 已显示，隐藏它
+    visibleSecretIds.value.splice(index, 1)
   } else {
-    visibleSecretKeys.value.add(secretId)
+    // 未显示，显示它
+    visibleSecretIds.value.push(secretId)
   }
-  // 触发响应式更新
-  visibleSecretKeys.value = new Set(visibleSecretKeys.value)
 }
 
 const copySecretKey = async (secretKey) => {
   try {
-    await navigator.clipboard.writeText(secretKey)
-    MessagePlugin.success('密钥已复制到剪贴板')
+    // 优先使用 Clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(secretKey)
+      MessagePlugin.success('密钥已复制到剪贴板')
+    } else {
+      // 回退方案：使用 textarea
+      const textarea = document.createElement('textarea')
+      textarea.value = secretKey
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      try {
+        const successful = document.execCommand('copy')
+        if (successful) {
+          MessagePlugin.success('密钥已复制到剪贴板')
+        } else {
+          throw new Error('复制命令执行失败')
+        }
+      } finally {
+        document.body.removeChild(textarea)
+      }
+    }
   } catch (error) {
     MessagePlugin.error('复制失败：' + error.message)
   }
