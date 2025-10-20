@@ -148,6 +148,7 @@
               <th class="icon-col"></th>
               <th class="name-col">服务/名称</th>
               <th class="issuer-col">发行者</th>
+              <th class="note-col">备注</th>
               <th class="key-col">密钥</th>
               <th class="code-col">验证码</th>
               <th class="timer-col">剩余时间</th>
@@ -180,6 +181,14 @@
               </td>
               <td class="issuer-cell">
                 <span class="issuer">{{ secret.issuer || '-' }}</span>
+              </td>
+              <td class="note-cell">
+                <span 
+                  class="note-text" 
+                  :title="secret.note"
+                >
+                  {{ secret.note || '-' }}
+                </span>
               </td>
               <td class="secret-key-cell">
                 <div class="secret-key-wrapper">
@@ -281,6 +290,11 @@
                 <t-icon name="more" size="20px" />
               </t-button>
             </t-dropdown>
+          </div>
+          
+          <div v-if="secret.note" class="mobile-card-note">
+            <t-icon name="chat" size="14px" style="color: #999; margin-right: 4px;" />
+            <span class="mobile-note-text">{{ secret.note }}</span>
           </div>
           
           <div class="mobile-card-secret">
@@ -1515,27 +1529,31 @@ onUnmounted(() => {
 }
 
 .name-col {
-  width: 200px;
-}
-
-.issuer-col {
-  width: 150px;
-}
-
-.key-col {
-  width: 200px;
-}
-
-.code-col {
-  width: 150px;
-}
-
-.timer-col {
   width: 180px;
 }
 
+.issuer-col {
+  width: 140px;
+}
+
+.note-col {
+  width: 160px;
+}
+
+.key-col {
+  width: 180px;
+}
+
+.code-col {
+  width: 130px;
+}
+
+.timer-col {
+  width: 160px;
+}
+
 .action-col {
-  width: 120px;
+  width: 110px;
 }
 
 .secret-row {
@@ -1556,9 +1574,10 @@ onUnmounted(() => {
 }
 
 .secret-table td {
-  padding: 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid #f5f5f5;
   vertical-align: middle;
+  font-size: 14px;
 }
 
 [theme-mode="dark"] .secret-table td {
@@ -1615,6 +1634,41 @@ onUnmounted(() => {
   color: #999;
 }
 
+.note-text {
+  color: #666;
+  font-size: 13px;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, #fafbfc 0%, #f5f6f7 100%);
+  border-radius: 4px;
+  border-left: 2px solid #d9d9d9;
+  transition: all 0.2s ease;
+}
+
+.note-text:hover {
+  background: linear-gradient(135deg, #f0f2f5 0%, #e8eaed 100%);
+  border-left-color: #0052d9;
+}
+
+[theme-mode="dark"] .note-text {
+  color: #999;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+  border-left-color: #4a4a4a;
+}
+
+[theme-mode="dark"] .note-text:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.04) 100%);
+  border-left-color: #0052d9;
+}
+
+.note-cell {
+  max-width: 160px;
+}
+
 .secret-key-wrapper {
   display: flex;
   align-items: center;
@@ -1663,18 +1717,19 @@ onUnmounted(() => {
 
 .code-display {
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   color: #0050b3;
   cursor: pointer;
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: 8px 14px;
+  border-radius: 6px;
   display: inline-block;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
   background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
   border: 1px solid #bae7ff;
+  box-shadow: 0 1px 3px rgba(0, 80, 179, 0.08);
 }
 
 .code-display:hover {
@@ -1796,18 +1851,58 @@ onUnmounted(() => {
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.mobile-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
 }
 
 [theme-mode="dark"] .mobile-card {
   background: var(--bg-secondary);
+  border-color: #3a3a3a;
+}
+
+[theme-mode="dark"] .mobile-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.2);
 }
 
 .mobile-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+}
+
+.mobile-card-note {
+  background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+  border-left: 3px solid #0052d9;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+[theme-mode="dark"] .mobile-card-note {
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.03) 100%);
+  border-left-color: #0052d9;
+}
+
+.mobile-note-text {
+  flex: 1;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+[theme-mode="dark"] .mobile-note-text {
+  color: #999;
 }
 
 .mobile-card-title {
@@ -1826,6 +1921,12 @@ onUnmounted(() => {
   justify-content: center;
   font-size: 20px;
   flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  transition: transform 0.2s ease;
+}
+
+.mobile-card:active .service-icon-mobile {
+  transform: scale(0.95);
 }
 
 .mobile-name {
@@ -1833,23 +1934,36 @@ onUnmounted(() => {
   font-weight: 600;
   display: flex;
   align-items: center;
+  line-height: 1.4;
+  color: #333;
+}
+
+[theme-mode="dark"] .mobile-name {
+  color: #e5e5e5;
 }
 
 .mobile-issuer {
   font-size: 13px;
   color: #999;
   margin-top: 4px;
+  line-height: 1.3;
+}
+
+[theme-mode="dark"] .mobile-issuer {
+  color: #888;
 }
 
 .mobile-card-secret {
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #f8f9fa 0%, #f5f5f5 100%);
   border-radius: 8px;
   padding: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  border: 1px solid #e8e8e8;
 }
 
 [theme-mode="dark"] .mobile-card-secret {
-  background: rgba(255,255,255,0.05);
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
+  border-color: #3a3a3a;
 }
 
 .mobile-secret-label {
@@ -1904,16 +2018,23 @@ onUnmounted(() => {
 
 .mobile-card-code {
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .mobile-code-display {
-  font-family: 'Courier New', monospace;
-  font-size: 32px;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  font-size: 36px;
   font-weight: 700;
-  letter-spacing: 4px;
+  letter-spacing: 6px;
   color: #1890ff;
   margin-bottom: 16px;
+  text-shadow: 0 2px 4px rgba(24, 144, 255, 0.1);
+  padding: 8px 0;
+}
+
+[theme-mode="dark"] .mobile-code-display {
+  color: #4da3ff;
+  text-shadow: 0 2px 4px rgba(77, 163, 255, 0.2);
 }
 
 .mobile-card-timer {
@@ -2059,6 +2180,61 @@ html[theme-mode="dark"] .upload-text-secondary {
   
   .stat-item {
     font-size: 12px;
+  }
+}
+
+/* 中等屏幕优化 */
+@media (min-width: 769px) and (max-width: 1200px) {
+  .name-col {
+    width: 160px;
+  }
+  
+  .issuer-col {
+    width: 120px;
+  }
+  
+  .note-col {
+    width: 140px;
+  }
+  
+  .key-col {
+    width: 160px;
+  }
+  
+  .code-col {
+    width: 120px;
+  }
+  
+  .timer-col {
+    width: 140px;
+  }
+  
+  .action-col {
+    width: 100px;
+  }
+}
+
+/* 大屏幕优化 */
+@media (min-width: 1400px) {
+  .main-content {
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  
+  .name-col {
+    width: 220px;
+  }
+  
+  .issuer-col {
+    width: 160px;
+  }
+  
+  .note-col {
+    width: 180px;
+  }
+  
+  .key-col {
+    width: 200px;
   }
 }
 </style>
