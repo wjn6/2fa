@@ -391,7 +391,7 @@
           </t-radio-group>
         </t-form-item>
         <t-form-item label="选择文件">
-          <input type="file" accept=".json" @change="handleFileSelect" ref="fileInputRef" />
+          <input type="file" accept=".json" @change="handleImportFileSelect" ref="fileInputRef" />
         </t-form-item>
       </t-form>
     </t-dialog>
@@ -402,30 +402,44 @@
       header="扫描二维码"
       :width="isMobile ? '90%' : '500px'"
       :footer="false"
+      @close="closeQRUpload"
     >
       <div style="text-align: center;">
         <div v-if="qrImageData" style="margin-bottom: 16px;">
           <img :src="qrImageData" style="max-width: 100%; max-height: 300px; border-radius: 8px;" />
         </div>
-        <t-upload
-          theme="image"
-          accept="image/*"
-          :auto-upload="false"
-          @change="handleQRUpload"
-          tips="支持 JPG、PNG 格式的二维码图片"
+        
+        <!-- 拖拽上传区域 -->
+        <div 
+          class="qr-upload-zone"
+          :class="{ 'dragging': isDragging }"
+          @drop="handleDrop"
+          @dragover="handleDragOver"
+          @dragleave="handleDragLeave"
+          @click="triggerFileInput"
         >
-          <template #trigger>
-            <t-button theme="primary" size="large">
-              <template #icon><t-icon name="upload" /></template>
-              选择二维码图片
-            </t-button>
-          </template>
-        </t-upload>
-        <div style="margin-top: 16px; color: #999; font-size: 13px;">
-          <p>提示：</p>
-          <p>1. 从2FA服务商获取二维码</p>
-          <p>2. 截图或保存二维码图片</p>
-          <p>3. 上传图片自动解析密钥</p>
+          <t-icon name="cloud-upload" size="48px" style="color: #0052d9; margin-bottom: 16px;" />
+          <div class="upload-text-primary">
+            点击选择 / 拖拽图片 / Ctrl+V 粘贴
+          </div>
+          <div class="upload-text-secondary">
+            支持 JPG、PNG 格式的二维码图片
+          </div>
+          <input 
+            ref="qrFileInput"
+            type="file" 
+            accept="image/*" 
+            style="display: none;"
+            @change="handleQRFileSelect"
+          />
+        </div>
+        
+        <div style="margin-top: 16px; color: #999; font-size: 13px; text-align: left;">
+          <p><strong>使用方法：</strong></p>
+          <p>• 点击上方区域选择图片</p>
+          <p>• 拖拽图片到上方区域</p>
+          <p>• 复制图片后按 Ctrl+V 粘贴</p>
+          <p>• 系统将自动解析二维码并填充密钥</p>
         </div>
       </div>
     </t-dialog>
@@ -696,22 +710,91 @@ const showAddDialog = () => {
 
 const qrUploadDialogVisible = ref(false)
 const qrImageData = ref('')
+const qrFileInput = ref(null)
+const isDragging = ref(false)
 
 const showQRUpload = () => {
   qrUploadDialogVisible.value = true
+  qrImageData.value = ''
+  
+  // 监听粘贴事件
+  setTimeout(() => {
+    document.addEventListener('paste', handlePaste)
+  }, 100)
 }
 
-const handleQRUpload = (event) => {
+// 关闭对话框时移除粘贴监听
+const closeQRUpload = () => {
+  document.removeEventListener('paste', handlePaste)
+}
+
+// 触发文件选择
+const triggerFileInput = () => {
+  qrFileInput.value?.click()
+}
+
+// 处理二维码图片选择
+const handleQRFileSelect = (event) => {
   const file = event.target.files[0]
+  if (file) {
+    processQRImage(file)
+  }
+}
+
+// 处理拖拽
+const handleDragOver = (e) => {
+  e.preventDefault()
+  isDragging.value = true
+}
+
+const handleDragLeave = (e) => {
+  e.preventDefault()
+  isDragging.value = false
+}
+
+const handleDrop = (e) => {
+  e.preventDefault()
+  isDragging.value = false
+  
+  const file = e.dataTransfer.files[0]
+  if (file && file.type.startsWith('image/')) {
+    processQRImage(file)
+  } else {
+    MessagePlugin.warning('请拖拽图片文件')
+  }
+}
+
+// 处理粘贴
+const handlePaste = (e) => {
+  if (!qrUploadDialogVisible.value) return
+  
+  const items = e.clipboardData?.items
+  if (!items) return
+  
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.startsWith('image/')) {
+      const file = items[i].getAsFile()
+      processQRImage(file)
+      e.preventDefault()
+      break
+    }
+  }
+}
+
+// 处理二维码图片
+const processQRImage = (file) => {
   if (!file) return
 
   const reader = new FileReader()
   reader.onload = async (e) => {
     try {
       qrImageData.value = e.target.result
+      MessagePlugin.loading('正在解析二维码...', 0)
       
       // 调用后端解析二维码
       const res = await qrcodeApi.upload({ image: e.target.result })
+      
+      MessagePlugin.close()
       
       if (res.data.success) {
         const data = res.data.data
@@ -722,12 +805,18 @@ const handleQRUpload = (event) => {
           issuer: data.issuer || '',
           note: ''
         }
-        MessagePlugin.success('二维码解析成功')
+        MessagePlugin.success('二维码解析成功！')
         qrUploadDialogVisible.value = false
+        secretDialogVisible.value = true
+        closeQRUpload()
       }
     } catch (error) {
+      MessagePlugin.close()
       MessagePlugin.error('二维码解析失败：' + (error.response?.data?.message || error.message))
     }
+  }
+  reader.onerror = () => {
+    MessagePlugin.error('图片读取失败，请重试')
   }
   reader.readAsDataURL(file)
 }
@@ -937,7 +1026,8 @@ const batchExport = () => {
   }
 }
 
-const handleFileSelect = (event) => {
+// 处理备份文件选择
+const handleImportFileSelect = (event) => {
   fileInputRef.value = event.target.files[0]
 }
 
@@ -1012,6 +1102,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (timer) clearInterval(timer)
   window.removeEventListener('resize', handleResize)
+  document.removeEventListener('paste', handlePaste)
 })
 </script>
 
@@ -1835,6 +1926,61 @@ onUnmounted(() => {
   font-size: 13px;
   color: #999;
   white-space: nowrap;
+}
+
+/* 二维码上传区域样式 */
+.qr-upload-zone {
+  border: 2px dashed #dcdcdc;
+  border-radius: 12px;
+  padding: 40px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f5f7fa;
+}
+
+.qr-upload-zone:hover {
+  border-color: #0052d9;
+  background: #f0f5ff;
+}
+
+.qr-upload-zone.dragging {
+  border-color: #0052d9;
+  background: #e6f4ff;
+  transform: scale(1.02);
+}
+
+html[theme-mode="dark"] .qr-upload-zone {
+  background: #2c2c2c;
+  border-color: #4a4a4a;
+}
+
+html[theme-mode="dark"] .qr-upload-zone:hover {
+  background: #363636;
+  border-color: #0052d9;
+}
+
+html[theme-mode="dark"] .qr-upload-zone.dragging {
+  background: #1a3a5c;
+  border-color: #0052d9;
+}
+
+.upload-text-primary {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #000;
+}
+
+.upload-text-secondary {
+  font-size: 13px;
+  color: #999;
+}
+
+html[theme-mode="dark"] .upload-text-primary {
+  color: #fff;
+}
+
+html[theme-mode="dark"] .upload-text-secondary {
+  color: #999;
 }
 
 /* 响应式 */
