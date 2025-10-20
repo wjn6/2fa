@@ -1,0 +1,77 @@
+/* 浅色主题 */
+:root,
+[theme-mode="light"] {
+  --bg-color: #f5f5f5;
+  --bg-secondary: #ffffff;
+  --text-color: #333333;
+  --text-secondary: #666666;
+  --border-color: #e7e7e7;
+  --shadow-light: rgba(0, 0, 0, 0.06);
+  --shadow-medium: rgba(0, 0, 0, 0.12);
+  --scrollbar-track: #f1f1f1;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a8a8a8;
+  --primary-color: #1890ff;
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --error-color: #f5222d;
+}
+
+/* 深色主题 */
+[theme-mode="dark"],
+.dark {
+  --bg-color: #1a1a1a;
+  --bg-secondary: #2a2a2a;
+  --text-color: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --border-color: #3a3a3a;
+  --shadow-light: rgba(0, 0, 0, 0.3);
+  --shadow-medium: rgba(0, 0, 0, 0.5);
+  --scrollbar-track: #2a2a2a;
+  --scrollbar-thumb: #4a4a4a;
+  --scrollbar-thumb-hover: #5a5a5a;
+  --primary-color: #409eff;
+  --success-color: #67c23a;
+  --warning-color: #e6a23c;
+  --error-color: #f56c6c;
+}
+
+/* TDesign 深色主题覆盖 */
+[theme-mode="dark"] .t-button--theme-primary {
+  background-color: var(--primary-color);
+}
+
+[theme-mode="dark"] .t-card {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[theme-mode="dark"] .t-input {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+[theme-mode="dark"] .t-textarea {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+[theme-mode="dark"] .t-select {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[theme-mode="dark"] .t-menu {
+  background-color: var(--bg-secondary);
+}
+
+[theme-mode="dark"] .t-menu-item {
+  color: var(--text-color);
+}
+
+[theme-mode="dark"] .t-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
