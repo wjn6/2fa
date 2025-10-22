@@ -10,7 +10,7 @@ require('dotenv').config();
 const routes = require('./routes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5555;
 
 // 确保数据目录存在
 const dataDir = path.join(__dirname, '../data');

@@ -11,6 +11,11 @@ const adminController = require('../controllers/adminController');
 const tagController = require('../controllers/tagController');
 const qrcodeController = require('../controllers/qrcodeController');
 const userController = require('../controllers/userController');
+const systemController = require('../controllers/systemController');
+const exportController = require('../controllers/exportController');
+const templateController = require('../controllers/templateController');
+const apiKeyController = require('../controllers/apiKeyController');
+const emailController = require('../controllers/emailController');
 
 // 中间件
 const { authenticateUser, requireAdmin, requireUnlocked } = require('../middleware/auth');
@@ -92,21 +97,83 @@ router.post('/backup/import-google', backupController.importGoogleAuthenticator)
 
 // 用户管理（需要登录和管理员权限）
 router.get('/admin/users', authenticateUser, requireAdmin, adminController.getAllUsers);
+router.get('/admin/users/:id', authenticateUser, requireAdmin, adminController.getUserDetail);
 router.post('/admin/users', authenticateUser, requireAdmin, adminController.createUser);
 router.put('/admin/users/:id', authenticateUser, requireAdmin, adminController.updateUser);
 router.delete('/admin/users/:id', authenticateUser, requireAdmin, adminController.deleteUser);
+router.post('/admin/users/batch-status', authenticateUser, requireAdmin, adminController.batchUpdateUserStatus);
+router.post('/admin/users/batch-delete', authenticateUser, requireAdmin, adminController.batchDeleteUsers);
+router.post('/admin/users/:id/reset-password', authenticateUser, requireAdmin, adminController.resetUserPassword);
 
-// 系统设置
-router.get('/admin/settings', authenticateUser, requireAdmin, adminController.getSettings);
-router.put('/admin/settings', authenticateUser, requireAdmin, adminController.updateSettings);
+// 密钥管理（管理员）
+router.get('/admin/secrets', authenticateUser, requireAdmin, adminController.getAllSecrets);
+router.get('/admin/secrets/statistics', authenticateUser, requireAdmin, adminController.getSecretStatistics);
+router.delete('/admin/secrets/:id', authenticateUser, requireAdmin, adminController.deleteSecret);
+
+// 系统配置管理
+router.get('/admin/system/settings', authenticateUser, requireAdmin, systemController.getSettings);
+router.put('/admin/system/settings', authenticateUser, requireAdmin, systemController.updateSettings);
+router.get('/admin/system/info', authenticateUser, requireAdmin, systemController.getSystemInfo);
+
+// 邀请码管理
+router.get('/admin/invites', authenticateUser, requireAdmin, systemController.getInviteCodes);
+router.post('/admin/invites', authenticateUser, requireAdmin, systemController.generateInviteCode);
+router.delete('/admin/invites/:id', authenticateUser, requireAdmin, systemController.deleteInviteCode);
+router.post('/admin/invites/validate', systemController.validateInviteCode); // 公开接口，用于注册时验证
+
+// 日志管理
+router.get('/admin/logs/operation', authenticateUser, requireAdmin, systemController.getOperationLogs);
+router.get('/admin/logs/login', authenticateUser, requireAdmin, systemController.getLoginLogs);
+router.post('/admin/logs/cleanup', authenticateUser, requireAdmin, systemController.cleanupLogs);
+
+// 数据备份管理
+router.get('/admin/backups', authenticateUser, requireAdmin, systemController.getBackups);
+router.post('/admin/backups', authenticateUser, requireAdmin, systemController.createBackup);
+router.get('/admin/backups/:id/download', authenticateUser, requireAdmin, systemController.downloadBackup);
+router.delete('/admin/backups/:id', authenticateUser, requireAdmin, systemController.deleteBackup);
 
 // 统计信息
 router.get('/admin/statistics', authenticateUser, requireAdmin, adminController.getStatistics);
+router.get('/admin/statistics/enhanced', authenticateUser, requireAdmin, adminController.getEnhancedStatistics);
 router.get('/admin/usage-logs', authenticateUser, requireAdmin, adminController.getUsageLogs);
+
+// 系统设置（旧版API，保留向后兼容）
+router.get('/admin/settings', authenticateUser, requireAdmin, adminController.getSettings);
+router.put('/admin/settings', authenticateUser, requireAdmin, adminController.updateSettings);
 
 // 系统维护
 router.post('/admin/cleanup-sessions', authenticateUser, requireAdmin, adminController.cleanupSessions);
 router.post('/admin/cleanup-logs', authenticateUser, requireAdmin, adminController.cleanupLogs);
 router.post('/admin/optimize-database', authenticateUser, requireAdmin, adminController.optimizeDatabase);
+
+// 数据导入导出
+router.get('/admin/export/all', authenticateUser, requireAdmin, exportController.exportAllData);
+router.get('/admin/export/table/:table', authenticateUser, requireAdmin, exportController.exportTable);
+router.post('/admin/import/all', authenticateUser, requireAdmin, exportController.importAllData);
+
+// 密钥模板（公开访问）
+router.get('/templates', templateController.getAllTemplates);
+router.get('/templates/search', templateController.searchTemplates);
+router.get('/templates/categories', templateController.getCategories);
+router.get('/templates/:id', templateController.getTemplateById);
+
+// API密钥管理（需要登录）
+router.get('/api-keys', authenticateUser, apiKeyController.getApiKeys);
+router.post('/api-keys', authenticateUser, apiKeyController.createApiKey);
+router.put('/api-keys/:id', authenticateUser, apiKeyController.updateApiKey);
+router.delete('/api-keys/:id', authenticateUser, apiKeyController.deleteApiKey);
+
+// 邮件管理（需要管理员权限）
+router.get('/admin/email/config', authenticateUser, requireAdmin, emailController.getEmailConfig);
+router.put('/admin/email/config', authenticateUser, requireAdmin, emailController.updateEmailConfig);
+router.post('/admin/email/test-connection', authenticateUser, requireAdmin, emailController.testEmail);
+router.post('/admin/email/send-test', authenticateUser, requireAdmin, emailController.sendTestEmail);
+
+// 邮件模板管理
+router.get('/admin/email/templates', authenticateUser, requireAdmin, emailController.getEmailTemplates);
+router.get('/admin/email/templates/:id', authenticateUser, requireAdmin, emailController.getEmailTemplate);
+router.post('/admin/email/templates', authenticateUser, requireAdmin, emailController.createEmailTemplate);
+router.put('/admin/email/templates/:id', authenticateUser, requireAdmin, emailController.updateEmailTemplate);
+router.delete('/admin/email/templates/:id', authenticateUser, requireAdmin, emailController.deleteEmailTemplate);
 
 module.exports = router;

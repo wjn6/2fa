@@ -1,28 +1,35 @@
 version: '3.8'
 
 services:
+  # 后端服务
   backend:
     build: ./backend
     container_name: 2fa-backend
     restart: unless-stopped
-    environment:
-      - PORT=3000
-      - DB_PATH=/app/data/2fa.db
-    volumes:
-      - ./data:/app/data
     ports:
-      - "3000:3000"
+      - "5555:5555"
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/backups:/app/backups
+    environment:
+      - NODE_ENV=production
+      - PORT=5555
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this}
+      - DATABASE_PATH=/app/data/2fa.db
     networks:
       - 2fa-network
 
+  # 前端服务
   frontend:
     build: ./frontend
     container_name: 2fa-frontend
     restart: unless-stopped
     ports:
-      - "5555:80"
+      - "5656:80"
     depends_on:
       - backend
+    environment:
+      - VITE_API_URL=http://backend:5555
     networks:
       - 2fa-network
 
@@ -31,5 +38,5 @@ networks:
     driver: bridge
 
 volumes:
-  data:
-
+  backend-data:
+  backend-backups:

@@ -70,6 +70,8 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
+    const ip = req.ip || req.connection.remoteAddress;
+    const userAgent = req.get('user-agent');
 
     if (!username || !password) {
       return res.status(400).json({ success: false, message: '用户名和密码不能为空' });
@@ -78,22 +80,63 @@ exports.login = async (req, res) => {
     // 查找用户
     const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
     if (!user) {
+      // 记录失败的登录尝试
+      recordLoginLog(null, username, 'password', 'failed', ip, userAgent, '用户不存在');
       return res.status(401).json({ success: false, message: '用户名或密码错误' });
+    }
+
+    // 检查账户锁定状态
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      recordLoginLog(user.id, username, 'password', 'failed', ip, userAgent, '账户已锁定');
+      return res.status(403).json({ 
+        success: false, 
+        message: '账户已被锁定，请稍后再试' 
+      });
     }
 
     // 检查用户是否被禁用
     if (!user.is_active) {
+      recordLoginLog(user.id, username, 'password', 'failed', ip, userAgent, '账户已禁用');
       return res.status(403).json({ success: false, message: '账号已被禁用，请联系管理员' });
     }
 
     // 验证密码
     const isPasswordValid = bcrypt.compareSync(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ success: false, message: '用户名或密码错误' });
+      // 增加失败次数
+      const failedCount = (user.failed_login_count || 0) + 1;
+      const maxAttempts = 5; // 可配置
+      
+      if (failedCount >= maxAttempts) {
+        // 锁定账户30分钟
+        const lockUntil = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+        db.prepare('UPDATE users SET failed_login_count = ?, locked_until = ? WHERE id = ?')
+          .run(failedCount, lockUntil, user.id);
+        recordLoginLog(user.id, username, 'password', 'failed', ip, userAgent, '密码错误，账户已锁定');
+        return res.status(401).json({ 
+          success: false, 
+          message: '密码错误次数过多，账户已被锁定30分钟' 
+        });
+      } else {
+        db.prepare('UPDATE users SET failed_login_count = ? WHERE id = ?').run(failedCount, user.id);
+        recordLoginLog(user.id, username, 'password', 'failed', ip, userAgent, '密码错误');
+        return res.status(401).json({ 
+          success: false, 
+          message: `用户名或密码错误，剩余尝试次数：${maxAttempts - failedCount}` 
+        });
+      }
     }
 
-    // 更新最后登录时间
-    db.prepare('UPDATE users SET last_login = datetime(\'now\') WHERE id = ?').run(user.id);
+    // 登录成功，重置失败次数
+    db.prepare(`
+      UPDATE users 
+      SET last_login = datetime('now'), 
+          login_count = login_count + 1,
+          failed_login_count = 0, 
+          locked_until = NULL,
+          last_ip = ?
+      WHERE id = ?
+    `).run(ip, user.id);
 
     // 生成 JWT Token
     const token = jwt.sign(
@@ -105,6 +148,9 @@ exports.login = async (req, res) => {
       JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    // 记录成功的登录
+    recordLoginLog(user.id, username, 'password', 'success', ip, userAgent);
 
     res.json({
       success: true,
@@ -219,4 +265,19 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ success: false, message: '更新信息失败' });
   }
 };
+
+/**
+ * 辅助函数：记录登录日志
+ */
+function recordLoginLog(userId, username, loginType, status, ipAddress, userAgent, failureReason = null) {
+  try {
+    db.prepare(`
+      INSERT INTO login_logs (user_id, username, login_type, status, ip_address, user_agent, failure_reason)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(userId, username, loginType, status, ipAddress, userAgent, failureReason);
+  } catch (error) {
+    console.error('记录登录日志失败:', error);
+  }
+}
+
 
