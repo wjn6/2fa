@@ -181,6 +181,18 @@ function initDatabase() {
   console.log('Database initialized successfully');
 }
 
+// 运行数据库迁移
+function runMigrations() {
+  try {
+    console.log('检查数据库迁移...');
+    const migrate = require('./migrations/001_add_multi_user_support');
+    migrate();
+  } catch (error) {
+    console.warn('迁移警告:', error.message);
+  }
+}
+
 initDatabase();
+runMigrations();
 
 module.exports = db;

@@ -109,7 +109,7 @@
           <div class="setting-item">
             <div class="item-info">
               <div class="item-label">版本信息</div>
-              <div class="item-desc">2FA Notebook v2.0.0</div>
+              <div class="item-desc">2FA Authenticator v2.3</div>
             </div>
           </div>
         </div>
@@ -284,14 +284,21 @@ const handleChangePassword = async () => {
 
 .setting-card {
   background: white;
-  border-radius: 8px;
-  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  border: 1px solid #e7e7e7;
   overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 2px 6px rgba(0,0,0,0.02);
+  transition: box-shadow 0.2s ease;
+}
+
+.setting-card:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
 }
 
 [theme-mode="dark"] .setting-card {
   background: #2a2a2a;
   border-color: #3a3a3a;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.15);
 }
 
 .setting-item {
@@ -348,19 +355,88 @@ const handleChangePassword = async () => {
   color: #999;
 }
 
+/* 响应式优化 */
 @media (max-width: 768px) {
+  .header-content {
+    padding: 12px 16px;
+  }
+
+  .header-content h1 {
+    font-size: 18px;
+  }
+
   .settings-content {
-    padding: 16px;
+    padding: 16px 12px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .setting-card {
+    border-radius: 10px;
   }
 
   .setting-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .sub-item {
+    padding-left: 32px;
   }
 
   .setting-item > *:last-child {
     width: 100%;
+  }
+
+  .item-label {
+    font-size: 13px;
+  }
+
+  .item-desc {
+    font-size: 12px;
+  }
+
+  /* 移动端单选按钮组优化 */
+  .setting-item :deep(.t-radio-group) {
+    width: 100%;
+  }
+
+  .setting-item :deep(.t-radio-button) {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* 移动端选择框优化 */
+  .setting-item :deep(.t-select) {
+    width: 100% !important;
+  }
+}
+
+/* 超小屏幕优化 */
+@media (max-width: 375px) {
+  .settings-content {
+    padding: 12px 10px;
+  }
+
+  .setting-item {
+    padding: 12px 14px;
+  }
+
+  .section-title {
+    font-size: 12px;
+  }
+
+  .item-label {
+    font-size: 12px;
+  }
+
+  .item-desc {
+    font-size: 11px;
   }
 }
 </style>

@@ -10,9 +10,11 @@ const authController = require('../controllers/authController');
 const adminController = require('../controllers/adminController');
 const tagController = require('../controllers/tagController');
 const qrcodeController = require('../controllers/qrcodeController');
+const userController = require('../controllers/userController');
 
 // 中间件
 const { authenticateUser, requireAdmin, requireUnlocked } = require('../middleware/auth');
+const { authenticateToken, requireAdmin: requireAdminRole, checkResourceOwnership } = require('../middleware/authMiddleware');
 
 // 配置文件上传
 const upload = multer({ 
@@ -22,14 +24,25 @@ const upload = multer({
 
 // ==================== 公开路由 ====================
 
-// 认证相关
-router.post('/auth/login', authController.login);
+// 用户认证相关（新增多用户支持）
+router.post('/users/register', userController.register);
+router.post('/users/login', userController.login);
+
+// 主密码认证相关（保留向后兼容）
+router.post('/auth/login', authController.login); // 管理员登录
 router.get('/auth/check-master-password', authController.checkMasterPassword);
 router.post('/auth/set-master-password', authController.setMasterPassword);
 router.post('/auth/unlock', authController.unlockWithMasterPassword);
 router.post('/auth/lock', authController.lock);
 router.get('/auth/password-hint', authController.getPasswordHint);
 router.post('/auth/change-master-password', authController.changeMasterPassword);
+
+// ==================== 需要认证的路由（多用户）====================
+
+// 用户个人信息（需要登录）
+router.get('/users/me', authenticateToken, userController.getCurrentUser);
+router.put('/users/me', authenticateToken, userController.updateProfile);
+router.post('/users/change-password', authenticateToken, userController.changePassword);
 
 // ==================== 需要解锁的路由 ====================
 

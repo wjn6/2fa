@@ -79,7 +79,16 @@ api.interceptors.response.use(
   }
 )
 
-// 认证相关 API
+// 用户认证相关 API（多用户）
+export const userApi = {
+  register: (data) => api.post('/users/register', data),
+  login: (data) => api.post('/users/login', data),
+  getCurrentUser: () => api.get('/users/me'),
+  updateProfile: (data) => api.put('/users/me', data),
+  changePassword: (data) => api.post('/users/change-password', data)
+}
+
+// 主密码认证相关 API（管理员/向后兼容）
 export const authApi = {
   login: (data) => api.post('/auth/login', data),
   checkMasterPassword: () => api.get('/auth/check-master-password'),

@@ -26,6 +26,7 @@
     "password": "Password",
     "masterPassword": "Master Password",
     "unlock": "Unlock",
+    "unlocking": "Unlocking...",
     "lock": "Lock",
     "setMasterPassword": "Set Master Password",
     "changeMasterPassword": "Change Master Password",

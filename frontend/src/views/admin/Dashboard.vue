@@ -1,32 +1,75 @@
 <template>
   <div class="dashboard">
-    <h1>统计仪表盘</h1>
+    <div class="dashboard-header">
+      <h1>统计仪表盘</h1>
+      <span class="update-time">最后更新：刚刚</span>
+    </div>
     
-    <t-row :gutter="16" style="margin-top: 24px;">
-      <t-col :span="6">
-        <t-card title="密钥总数" hover-shadow>
-          <h2>{{ stats.totalSecrets || 0 }}</h2>
+    <!-- 统计卡片 -->
+    <t-row :gutter="[16, 16]" class="stats-row">
+      <t-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
+        <t-card hover-shadow class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <t-icon name="secured" size="24px" />
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">密钥总数</div>
+              <div class="stat-value">{{ stats.totalSecrets || 0 }}</div>
+            </div>
+          </div>
         </t-card>
       </t-col>
-      <t-col :span="6">
-        <t-card title="分类总数" hover-shadow>
-          <h2>{{ stats.totalCategories || 0 }}</h2>
+      <t-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
+        <t-card hover-shadow class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+              <t-icon name="folder" size="24px" />
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">分类总数</div>
+              <div class="stat-value">{{ stats.totalCategories || 0 }}</div>
+            </div>
+          </div>
         </t-card>
       </t-col>
-      <t-col :span="6">
-        <t-card title="标签总数" hover-shadow>
-          <h2>{{ stats.totalTags || 0 }}</h2>
+      <t-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
+        <t-card hover-shadow class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+              <t-icon name="discount" size="24px" />
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">标签总数</div>
+              <div class="stat-value">{{ stats.totalTags || 0 }}</div>
+            </div>
+          </div>
         </t-card>
       </t-col>
-      <t-col :span="6">
-        <t-card title="用户总数" hover-shadow>
-          <h2>{{ stats.totalUsers || 0 }}</h2>
+      <t-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
+        <t-card hover-shadow class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+              <t-icon name="user" size="24px" />
+            </div>
+            <div class="stat-info">
+              <div class="stat-label">用户总数</div>
+              <div class="stat-value">{{ stats.totalUsers || 0 }}</div>
+            </div>
+          </div>
         </t-card>
       </t-col>
     </t-row>
 
-    <t-card title="最常使用密钥" style="margin-top: 24px;">
-      <t-table :data="stats.topSecrets || []" :columns="columns" />
+    <!-- 最常使用密钥表格 -->
+    <t-card title="最常使用密钥" class="table-card">
+      <t-table 
+        :data="stats.topSecrets || []" 
+        :columns="columns"
+        :max-height="400"
+        stripe
+        hover
+      />
     </t-card>
   </div>
 </template>
@@ -57,10 +100,146 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dashboard h2 {
-  font-size: 32px;
-  color: #1890ff;
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+  font-size: 24px;
+  font-weight: 600;
   margin: 0;
+  color: #333;
+}
+
+[theme-mode="dark"] .dashboard-header h1 {
+  color: #e5e5e5;
+}
+
+.update-time {
+  font-size: 13px;
+  color: #999;
+}
+
+/* 统计卡片 */
+.stats-row {
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+}
+
+.stat-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.stat-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1;
+}
+
+[theme-mode="dark"] .stat-value {
+  color: #e5e5e5;
+}
+
+/* 表格卡片 */
+.table-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 20px;
+  }
+
+  .stats-row {
+    margin-bottom: 16px;
+  }
+
+  .stat-content {
+    padding: 4px 0;
+  }
+
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .table-card {
+    border-radius: 10px;
+  }
+
+  /* 表格横向滚动 */
+  .table-card :deep(.t-table) {
+    min-width: 500px;
+  }
+}
+
+@media (max-width: 375px) {
+  .dashboard-header h1 {
+    font-size: 18px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
 }
 </style>
 

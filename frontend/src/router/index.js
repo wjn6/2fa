@@ -51,6 +51,11 @@ const routes = [
     component: () => import('../views/Login.vue')
   },
   {
+    path: '/register',
+    name: 'Register',
+    component: () => import('../views/Register.vue')
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('../views/Settings.vue'),
@@ -85,8 +90,8 @@ router.beforeEach((to, from, next) => {
     return
   }
   
-  // 如果已登录，不允许访问登录页
-  if (to.name === 'Login' && appStore.isAuthenticated) {
+  // 如果已登录，不允许访问登录/注册页
+  if ((to.name === 'Login' || to.name === 'Register') && appStore.isAuthenticated) {
     next('/admin')
     return
   }

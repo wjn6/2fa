@@ -1,53 +1,50 @@
 <template>
   <div class="unlock-container">
-    <div class="unlock-box">
-      <div class="unlock-header">
-        <div class="unlock-logo">
-          <div class="unlock-logo-icon">
-            <t-icon name="lock-on" size="32px" />
-          </div>
-        </div>
-        <h1>{{ $t('auth.unlock') }}</h1>
-        <p class="unlock-subtitle">{{ $t('auth.enterMasterPassword') }}</p>
+    <div class="unlock-box" :class="{ 'shake': showShake }">
+      <!-- 图标 -->
+      <div class="unlock-icon">
+        <t-icon name="lock-on" />
       </div>
 
-      <t-form ref="formRef" :data="form" :rules="rules" @submit="handleUnlock">
-        <t-form-item name="password">
-          <t-input
-            v-model="form.password"
-            type="password"
-            size="large"
-            :placeholder="$t('auth.enterPassword')"
-            @keyup.enter="handleUnlock"
-          >
-            <template #prefix-icon>
-              <t-icon name="lock-on" />
-            </template>
-          </t-input>
-        </t-form-item>
+      <!-- 标题 -->
+      <h1 class="unlock-title">{{ $t('auth.unlock') }}</h1>
 
-        <t-form-item v-if="hint">
-          <div class="hint-box">
-            <t-icon name="info-circle" />
-            <span>{{ $t('auth.passwordHint') }}: {{ hint }}</span>
-          </div>
-        </t-form-item>
+      <!-- 提示 -->
+      <div v-if="hint" class="hint-box">
+        <t-icon name="info-circle" size="14px" />
+        <span>{{ hint }}</span>
+      </div>
 
-        <t-form-item>
-          <t-button
-            theme="primary"
-            size="large"
-            block
-            :loading="loading"
-            @click="handleUnlock"
-          >
-            {{ $t('auth.unlock') }}
-          </t-button>
-        </t-form-item>
-      </t-form>
+      <!-- 密码输入 -->
+      <div class="password-wrapper">
+        <t-input
+          ref="passwordInput"
+          v-model="form.password"
+          type="password"
+          size="large"
+          :placeholder="$t('auth.enterPassword')"
+          @keyup.enter="handleUnlock"
+          :disabled="loading"
+        />
+        <div class="password-hint">{{ $t('auth.enterMasterPassword') }}</div>
+      </div>
 
+      <!-- 解锁按钮 -->
+      <t-button
+        theme="primary"
+        size="large"
+        block
+        :loading="loading"
+        :disabled="!form.password"
+        @click="handleUnlock"
+        class="unlock-button"
+      >
+        {{ loading ? $t('auth.unlocking') : $t('auth.unlock') }}
+      </t-button>
+
+      <!-- 底部 -->
       <div class="unlock-footer">
-        <t-button variant="text" @click="showSetPassword" v-if="!hasPassword">
+        <t-button variant="text" size="small" @click="showSetPassword" v-if="!hasPassword">
           {{ $t('auth.setMasterPassword') }}
         </t-button>
       </div>
@@ -73,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { MessagePlugin } from 'tdesign-vue-next'
@@ -87,6 +84,8 @@ const appStore = useAppStore()
 const loading = ref(false)
 const hasPassword = ref(true)
 const hint = ref('')
+const showShake = ref(false)
+const passwordInput = ref(null)
 const form = ref({
   password: ''
 })
@@ -97,15 +96,28 @@ const setPasswordForm = ref({
   hint: ''
 })
 
-const rules = {
-  password: [{ required: true, message: t('auth.enterPassword') }]
-}
-
 const setPasswordRules = {
   password: [
     { required: true, message: t('auth.enterPassword') },
     { min: 6, message: t('auth.passwordTooShort') }
   ]
+}
+
+// 自动聚焦密码框
+const focusPasswordInput = () => {
+  nextTick(() => {
+    if (passwordInput.value) {
+      passwordInput.value.$el.querySelector('input')?.focus()
+    }
+  })
+}
+
+// 错误晃动动效
+const triggerShake = () => {
+  showShake.value = true
+  setTimeout(() => {
+    showShake.value = false
+  }, 500)
 }
 
 const checkMasterPassword = async () => {
@@ -119,6 +131,7 @@ const checkMasterPassword = async () => {
       // 获取密码提示
       const hintRes = await authApi.getPasswordHint()
       hint.value = hintRes.data.data.hint
+      focusPasswordInput()
     }
   } catch (error) {
     console.error('Check master password failed:', error)
@@ -127,7 +140,6 @@ const checkMasterPassword = async () => {
 
 const handleUnlock = async () => {
   if (!form.value.password) {
-    MessagePlugin.warning(t('auth.enterPassword'))
     return
   }
 
@@ -141,6 +153,9 @@ const handleUnlock = async () => {
     }
   } catch (error) {
     console.error('Unlock failed:', error)
+    triggerShake()
+    form.value.password = ''
+    focusPasswordInput()
   } finally {
     loading.value = false
   }
@@ -162,6 +177,7 @@ const handleSetPassword = async () => {
       MessagePlugin.success(t('common.success'))
       hasPassword.value = true
       setPasswordVisible.value = false
+      hint.value = setPasswordForm.value.hint
       form.value.password = setPasswordForm.value.password
       handleUnlock()
     }
@@ -176,102 +192,230 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 容器 - Apple 风格 */
 .unlock-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: #fafafa;
   padding: 20px;
 }
 
 [theme-mode="dark"] .unlock-container {
-  background: #1a1a1a;
+  background: #000000;
 }
 
+/* 解锁框 - 垂直布局 */
 .unlock-box {
   width: 100%;
-  max-width: 420px;
-  background: white;
-  border-radius: 16px;
-  padding: 48px 40px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
-  border: 1px solid #f0f0f0;
-}
-
-[theme-mode="dark"] .unlock-box {
-  background: #2a2a2a;
-  border-color: #3a3a3a;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2);
-}
-
-.unlock-header {
+  max-width: 380px;
   text-align: center;
-  margin-bottom: 40px;
+  animation: fadeIn 0.4s ease-out;
 }
 
-.unlock-logo {
-  margin-bottom: 24px;
-  display: flex;
-  justify-content: center;
-}
-
-.unlock-logo-icon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #0050b3 0%, #1890ff 100%);
-  border-radius: 16px;
+/* 图标 */
+.unlock-icon {
+  margin: 0 auto 32px;
+  width: 72px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 0 8px 24px rgba(24, 144, 255, 0.25);
+  font-size: 40px;
+  color: #666;
 }
 
-[theme-mode="dark"] .unlock-logo-icon {
-  background: linear-gradient(135deg, #1890ff 0%, #4dabf7 100%);
-  box-shadow: 0 8px 24px rgba(77, 171, 247, 0.3);
+[theme-mode="dark"] .unlock-icon {
+  color: #999;
 }
 
-.unlock-header h1 {
-  margin: 0 0 8px 0;
-  font-size: 24px;
-  font-weight: 700;
+/* 标题 */
+.unlock-title {
+  margin: 0 0 24px 0;
+  font-size: 22px;
+  font-weight: 500;
   color: #1a1a1a;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
-[theme-mode="dark"] .unlock-header h1 {
+[theme-mode="dark"] .unlock-title {
   color: #ffffff;
 }
 
-.unlock-subtitle {
-  color: #999;
-  font-size: 14px;
-  margin: 0;
-  font-weight: 400;
-}
-
+/* 密码提示框 */
 .hint-box {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: #f0f9ff;
-  border-radius: 6px;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 10px 16px;
+  background: rgba(0, 82, 217, 0.06);
+  border-radius: 8px;
   font-size: 13px;
-  color: #0284c7;
-  border: 1px solid #bae6fd;
+  color: #0052d9;
+  border: 1px solid rgba(0, 82, 217, 0.12);
 }
 
 [theme-mode="dark"] .hint-box {
-  background: rgba(2, 132, 199, 0.1);
-  border-color: rgba(2, 132, 199, 0.2);
+  background: rgba(0, 82, 217, 0.1);
+  border-color: rgba(0, 82, 217, 0.2);
+  color: #4dabf7;
 }
 
+/* 密码输入包装 */
+.password-wrapper {
+  margin-bottom: 24px;
+}
+
+.password-wrapper :deep(.t-input) {
+  height: 52px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.password-wrapper :deep(.t-input:hover) {
+  border-color: #0052d9;
+}
+
+.password-wrapper :deep(.t-input:focus-within) {
+  border-color: #0052d9;
+  box-shadow: 0 0 0 3px rgba(0, 82, 217, 0.1);
+  transform: scale(1.01);
+}
+
+.password-wrapper :deep(.t-input__inner) {
+  font-size: 16px;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+[theme-mode="dark"] .password-wrapper :deep(.t-input) {
+  background: #1a1a1a;
+  border-color: #333;
+  color: #fff;
+}
+
+[theme-mode="dark"] .password-wrapper :deep(.t-input:hover) {
+  border-color: #0052d9;
+}
+
+/* 密码提示文字 */
+.password-hint {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #999;
+  letter-spacing: 0.2px;
+}
+
+[theme-mode="dark"] .password-hint {
+  color: #666;
+}
+
+/* 解锁按钮 */
+.unlock-button {
+  height: 56px !important;
+  border-radius: 12px !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.unlock-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 82, 217, 0.3);
+}
+
+.unlock-button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.unlock-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 底部 */
 .unlock-footer {
   text-align: center;
-  margin-top: 16px;
+  margin-top: 12px;
+}
+
+.unlock-footer :deep(.t-button) {
+  color: #666;
+  font-size: 14px;
+}
+
+.unlock-footer :deep(.t-button:hover) {
+  color: #0052d9;
+}
+
+[theme-mode="dark"] .unlock-footer :deep(.t-button) {
+  color: #999;
+}
+
+[theme-mode="dark"] .unlock-footer :deep(.t-button:hover) {
+  color: #4dabf7;
+}
+
+/* 错误晃动动画 */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+  20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+
+.shake {
+  animation: shake 0.5s ease;
+}
+
+/* 淡入动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .unlock-box {
+    max-width: 100%;
+  }
+
+  .unlock-icon {
+    width: 64px;
+    height: 64px;
+    font-size: 36px;
+    margin-bottom: 24px;
+  }
+
+  .unlock-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .password-wrapper :deep(.t-input) {
+    height: 48px;
+  }
+
+  .unlock-button {
+    height: 52px !important;
+  }
+
+  .hint-box {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
 }
 </style>
 

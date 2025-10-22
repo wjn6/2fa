@@ -26,6 +26,7 @@
     "password": "密码",
     "masterPassword": "主密码",
     "unlock": "解锁",
+    "unlocking": "解锁中...",
     "lock": "锁定",
     "setMasterPassword": "设置主密码",
     "changeMasterPassword": "修改主密码",

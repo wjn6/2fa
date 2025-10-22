@@ -3,6 +3,7 @@
     <!-- 顶部导航栏 -->
     <div class="header">
       <div class="header-container">
+        <!-- 品牌 Logo -->
         <div class="header-left">
           <div class="brand-logo">
             <div class="logo-icon">
@@ -13,21 +14,14 @@
             </div>
           </div>
         </div>
-        <div class="header-center">
-          <t-input 
-            v-model="searchKeyword" 
-            placeholder="搜索密钥、发行商..."
-            class="search-input"
-            clearable
-          >
-            <template #prefix-icon><t-icon name="search" /></template>
-          </t-input>
-        </div>
+        
+        <!-- 操作按钮 -->
         <div class="header-right">
           <t-button 
             v-if="!batchMode" 
             theme="primary" 
             @click="showAddDialog"
+            class="action-btn"
           >
             <template #icon><t-icon name="add" /></template>
             <span class="btn-text">新建</span>
@@ -36,6 +30,7 @@
             v-if="!batchMode && filteredSecrets.length > 0"
             variant="outline" 
             @click="enterBatchMode"
+            class="action-btn"
           >
             <template #icon><t-icon name="check-circle" /></template>
             <span class="btn-text">批量</span>
@@ -44,17 +39,40 @@
             v-if="batchMode"
             theme="danger"
             @click="exitBatchMode"
+            class="action-btn exit-batch-btn"
           >
-            退出批量
+            <span class="btn-text">退出批量</span>
+            <t-icon name="close" class="btn-icon-only" />
           </t-button>
           <t-dropdown v-if="!batchMode" :options="menuOptions" @click="handleMenu">
-            <t-button variant="outline" shape="circle">
+            <t-button variant="outline" shape="circle" class="icon-btn">
               <t-icon name="ellipsis" />
             </t-button>
           </t-dropdown>
-          <t-button v-if="!batchMode" variant="outline" shape="circle" @click="handleLock">
+          
+          <!-- 用户信息（多用户模式） -->
+          <t-dropdown v-if="!batchMode && currentUser" :options="userMenuOptions" @click="handleUserMenu">
+            <t-button variant="outline" class="user-btn">
+              <t-icon name="user" />
+              <span class="user-name">{{ currentUser.username }}</span>
+            </t-button>
+          </t-dropdown>
+          
+          <t-button v-if="!batchMode" variant="outline" shape="circle" @click="handleLock" class="icon-btn">
             <t-icon name="lock-on" />
           </t-button>
+        </div>
+        
+        <!-- 搜索框 -->
+        <div class="header-center">
+          <t-input 
+            v-model="searchKeyword" 
+            :placeholder="isMobile ? '搜索...' : '搜索密钥、发行商...'"
+            class="search-input"
+            clearable
+          >
+            <template #prefix-icon><t-icon name="search" /></template>
+          </t-input>
         </div>
       </div>
     </div>
@@ -434,10 +452,15 @@
         >
           <t-icon name="cloud-upload" size="48px" style="color: #0052d9; margin-bottom: 16px;" />
           <div class="upload-text-primary">
-            点击选择 / 拖拽图片 / Ctrl+V 粘贴
+            📤 点击选择 / 拖拽图片 / Ctrl+V 粘贴
           </div>
           <div class="upload-text-secondary">
-            支持 JPG、PNG 格式的二维码图片
+            支持 JPG、PNG 格式，最大 10MB
+          </div>
+          <div class="upload-tips">
+            <div class="tip-item">💡 确保图片清晰完整</div>
+            <div class="tip-item">💡 包含完整的二维码区域</div>
+            <div class="tip-item">💡 支持 Google / Microsoft Authenticator 等标准格式</div>
           </div>
           <input 
             ref="qrFileInput"
@@ -463,13 +486,16 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { MessagePlugin, DialogPlugin } from 'tdesign-vue-next'
 import { useAppStore } from '../stores/app'
-import { secretApi, backupApi, qrcodeApi } from '../api'
+import { secretApi, backupApi, qrcodeApi, userApi } from '../api'
 import { useKeyboard } from '../composables/useKeyboard'
 
 const router = useRouter()
 const appStore = useAppStore()
+
+// 当前用户信息
+const currentUser = ref(null)
 
 // 响应式检测
 const isMobile = ref(window.innerWidth <= 768)
@@ -512,6 +538,23 @@ const menuOptions = [
   { content: '设置', value: 'settings' }
 ]
 
+// 用户菜单选项
+const userMenuOptions = computed(() => {
+  const options = [
+    { content: '个人资料', value: 'profile', prefixIcon: 'user' },
+    { content: '修改密码', value: 'change-password', prefixIcon: 'lock-on' }
+  ]
+  
+  // 管理员显示后台管理入口
+  if (currentUser.value?.role === 'admin') {
+    options.push({ content: '管理后台', value: 'admin', prefixIcon: 'dashboard' })
+  }
+  
+  options.push({ content: '退出登录', value: 'logout', prefixIcon: 'poweroff', theme: 'danger' })
+  
+  return options
+})
+
 const getSecretMenu = (secret) => [
   { content: '编辑', value: 'edit' },
   { content: secret.is_favorite ? '取消收藏' : '收藏', value: 'favorite' },
@@ -531,6 +574,11 @@ const selectAll = computed({
 })
 
 const tokenProgress = computed(() => (tokenRemaining.value / 30) * 100)
+
+// 检测是否为移动端
+const isMobile = computed(() => {
+  return window.innerWidth <= 768
+})
 
 const filteredSecrets = computed(() => {
   let result = secrets.value
@@ -799,39 +847,92 @@ const handlePaste = (e) => {
 const processQRImage = (file) => {
   if (!file) return
 
+  // 验证文件类型
+  if (!file.type.startsWith('image/')) {
+    MessagePlugin.error('请上传图片文件（JPG、PNG 等格式）')
+    return
+  }
+
+  // 验证文件大小（限制10MB）
+  if (file.size > 10 * 1024 * 1024) {
+    MessagePlugin.error('图片文件过大，请选择小于 10MB 的图片')
+    return
+  }
+
   const reader = new FileReader()
   reader.onload = async (e) => {
     try {
       qrImageData.value = e.target.result
-      MessagePlugin.loading('正在解析二维码...', 0)
+      
+      const loadingMsg = MessagePlugin.loading({
+        content: '正在识别二维码，请稍候...',
+        duration: 0
+      })
       
       // 调用后端解析二维码
       const res = await qrcodeApi.upload({ image: e.target.result })
       
-      MessagePlugin.close()
+      loadingMsg.close()
       
       if (res.data.success) {
         const data = res.data.data
+        
+        console.log('解析结果:', data)
+        
+        // 验证必要字段
+        if (!data.secret) {
+          MessagePlugin.error('二维码数据不完整，缺少密钥信息')
+          return
+        }
+        
         // 自动填充表单
         secretForm.value = {
-          name: data.name || '',
-          secret_key: data.secret || '',
+          name: data.name || data.issuer || '未命名',
+          secret_key: data.secret,
           issuer: data.issuer || '',
           note: ''
         }
-        MessagePlugin.success('二维码解析成功！')
+        
+        MessagePlugin.success({
+          content: '✓ 二维码识别成功！',
+          duration: 2000
+        })
+        
         qrUploadDialogVisible.value = false
         secretDialogVisible.value = true
         closeQRUpload()
       }
     } catch (error) {
       MessagePlugin.close()
-      MessagePlugin.error('二维码解析失败：' + (error.response?.data?.message || error.message))
+      
+      console.error('二维码处理错误:', error)
+      
+      const errorMsg = error.response?.data?.message || error.message
+      
+      // 友好的错误提示
+      if (errorMsg.includes('未能识别') || errorMsg.includes('未找到')) {
+        MessagePlugin.error({
+          content: '❌ 未能识别到二维码\n\n💡 请确保：\n• 图片清晰完整\n• 包含完整的二维码\n• 光线充足、无反光\n• 尝试放大后截图',
+          duration: 5000
+        })
+      } else if (errorMsg.includes('otpauth')) {
+        MessagePlugin.error({
+          content: '❌ 二维码格式不正确\n\n💡 请使用：\n• Google Authenticator\n• Microsoft Authenticator\n• 其他标准 TOTP 应用的二维码',
+          duration: 5000
+        })
+      } else {
+        MessagePlugin.error({
+          content: '二维码解析失败\n\n原因：' + errorMsg,
+          duration: 4000
+        })
+      }
     }
   }
+  
   reader.onerror = () => {
-    MessagePlugin.error('图片读取失败，请重试')
+    MessagePlugin.error('图片读取失败，请确保文件未损坏')
   }
+  
   reader.readAsDataURL(file)
 }
 
@@ -918,6 +1019,50 @@ const handleMenu = async (data) => {
 const handleLock = () => {
   appStore.lock()
   router.push('/unlock')
+}
+
+// 用户菜单处理
+const handleUserMenu = async (data) => {
+  switch (data.value) {
+    case 'profile':
+      // TODO: 打开个人资料对话框
+      MessagePlugin.info('个人资料功能开发中...')
+      break
+    case 'change-password':
+      // TODO: 打开修改密码对话框
+      MessagePlugin.info('修改密码功能开发中...')
+      break
+    case 'admin':
+      router.push('/admin')
+      break
+    case 'logout':
+      const confirm = await DialogPlugin.confirm({
+        header: '退出登录',
+        body: '确定要退出登录吗？',
+        confirmBtn: '退出',
+        cancelBtn: '取消'
+      })
+      if (confirm) {
+        appStore.logout()
+        MessagePlugin.success('已退出登录')
+        router.push('/login')
+      }
+      break
+  }
+}
+
+// 获取当前用户信息
+const fetchCurrentUser = async () => {
+  if (!appStore.authToken) return
+  
+  try {
+    const res = await userApi.getCurrentUser()
+    if (res.data.success) {
+      currentUser.value = res.data.data
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
 }
 
 // 密钥显示/隐藏相关函数
@@ -1099,6 +1244,7 @@ let timer = null
 onMounted(() => {
   loadSecrets()
   loadTokens()
+  fetchCurrentUser() // 获取用户信息
   
   // P1 优化：检查备份状态
   checkBackupStatus()
@@ -1216,6 +1362,35 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* 用户按钮 */
+.user-btn {
+  padding: 0 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 18px;
+  transition: all 0.2s;
+}
+
+.user-btn:hover {
+  background: var(--td-bg-color-container-hover);
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 移动端专用图标在桌面端隐藏 */
+.btn-icon-only {
+  display: none;
 }
 
 .batch-toolbar {
@@ -2104,6 +2279,25 @@ html[theme-mode="dark"] .upload-text-secondary {
   color: #999;
 }
 
+.upload-tips {
+  margin-top: 20px;
+  text-align: left;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tip-item {
+  font-size: 12px;
+  color: #666;
+  padding: 4px 0;
+  line-height: 1.6;
+}
+
+html[theme-mode="dark"] .tip-item {
+  color: #999;
+}
+
 /* 响应式 */
   @media (max-width: 768px) {
   /* 收藏栏移动端适配 */
@@ -2116,55 +2310,119 @@ html[theme-mode="dark"] .upload-text-secondary {
     grid-template-columns: 1fr;
   }
 
+  /* 头部容器优化 */
   .header {
-    padding: 12px 16px;
-    flex-wrap: wrap;
-    gap: 12px;
+    padding: 10px 12px;
   }
 
+  .header-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* 第一行：品牌 + 按钮 */
   .header-left {
-    order: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
   }
 
-  .header-right {
-    order: 2;
+  .brand-logo {
+    gap: 8px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+
+  .brand-name {
+    font-size: 16px;
+  }
+
+  /* 第二行：搜索框独占一行 */
+  .header-center {
     width: 100%;
-    justify-content: space-between;
+    order: 3;
   }
 
   .search-input {
-    flex: 1;
+    width: 100%;
     max-width: none;
   }
 
+  /* 第三行：操作按钮 */
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+    width: 100%;
+    order: 2;
+  }
+
+  /* 按钮只显示图标，隐藏文字 */
   .btn-text {
     display: none;
   }
 
+  .btn-icon-only {
+    display: inline-block !important;
+  }
+
+  /* 批量模式按钮紧凑 */
+  .header-right .action-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+  }
+
+  .header-right .icon-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0;
+  }
+
+  .header-right :deep(.t-button) {
+    font-size: 14px;
+  }
+
+  /* 批量工具栏优化 */
   .batch-toolbar {
     flex-direction: column;
-    gap: 12px;
-    padding: 12px 16px;
+    gap: 10px;
+    padding: 10px 12px;
   }
 
-  .batch-toolbar-left,
+  .batch-toolbar-left {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   .batch-toolbar-right {
     width: 100%;
-    justify-content: space-between;
+    display: flex;
+    gap: 8px;
   }
 
-  .batch-toolbar-right {
-    flex-wrap: wrap;
+  .batch-toolbar-right :deep(.t-button) {
+    flex: 1;
+    font-size: 13px;
+    padding: 0 8px;
   }
 
-  .logo-text {
-    font-size: 16px;
-  }
-
+  /* 主内容区 */
   .main-content {
-    padding: 16px;
+    padding: 12px;
   }
 
+  /* 视图切换 */
   .desktop-view {
     display: none !important;
   }
@@ -2173,13 +2431,61 @@ html[theme-mode="dark"] .upload-text-secondary {
     display: block !important;
   }
 
+  /* 底部统计 */
   .footer-stats {
     flex-wrap: wrap;
     gap: 12px;
+    padding: 12px;
   }
   
   .stat-item {
     font-size: 12px;
+  }
+}
+
+/* 超小屏幕优化（iPhone SE 等）*/
+@media (max-width: 375px) {
+  .header {
+    padding: 8px 10px;
+  }
+
+  .brand-name {
+    font-size: 14px !important;
+  }
+
+  .logo-icon {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 16px !important;
+  }
+
+  .header-right .action-btn,
+  .header-right .icon-btn {
+    min-width: 32px;
+    height: 32px;
+  }
+
+  .mobile-card {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .mobile-service-icon {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 20px !important;
+  }
+
+  .mobile-code-display {
+    font-size: 24px !important;
+  }
+
+  .batch-toolbar {
+    padding: 8px 10px;
+  }
+
+  .main-content {
+    padding: 10px;
   }
 }
 
