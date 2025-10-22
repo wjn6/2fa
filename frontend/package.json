@@ -1,31 +1,10 @@
 {
-  "name": "2fa-frontend",
-  "version": "2.0.0",
-  "type": "module",
+  "name": "2fa-frontend-dist",
+  "version": "2.9.0",
+  "description": "2FA Notebook - 前端编译产物",
+  "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --port 8080"
   },
-  "dependencies": {
-    "vue": "^3.3.11",
-    "vue-router": "^4.2.5",
-    "vue-i18n": "^9.8.0",
-    "pinia": "^2.1.7",
-    "axios": "^1.6.2",
-    "tdesign-vue-next": "^1.7.2",
-    "tdesign-icons-vue-next": "^0.2.4",
-    "sortablejs": "^1.15.1",
-    "crypto-js": "^4.2.0",
-    "qrcode": "^1.5.3",
-    "html5-qrcode": "^2.3.8",
-    "jsqr": "^1.4.0",
-    "chart.js": "^4.4.1",
-    "vue-chartjs": "^5.3.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^4.5.2",
-    "vite": "^5.0.8",
-    "vite-plugin-pwa": "^0.17.4"
-  }
+  "note": "此目录包含已编译的前端文件，可直接用于生产部署"
 }
