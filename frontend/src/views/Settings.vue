@@ -11,14 +11,14 @@
       </div>
     </div>
 
-    <div class="settings-content">
+    <div class="settings-content app-container">
       <!-- 外观设置 -->
       <div class="setting-section">
         <div class="section-title">
           <t-icon name="palette" />
           <span>外观</span>
         </div>
-        <div class="setting-card">
+        <div class="setting-card app-card">
           <div class="setting-item">
             <div class="item-info">
               <div class="item-label">主题模式</div>
@@ -39,7 +39,7 @@
           <t-icon name="translate" />
           <span>语言</span>
         </div>
-        <div class="setting-card">
+        <div class="setting-card app-card">
           <div class="setting-item">
             <div class="item-info">
               <div class="item-label">界面语言</div>
@@ -59,7 +59,7 @@
           <t-icon name="lock-on" />
           <span>安全</span>
         </div>
-        <div class="setting-card">
+        <div class="setting-card app-card">
           <div class="setting-item">
             <div class="item-info">
               <div class="item-label">自动锁定</div>
@@ -105,7 +105,7 @@
           <t-icon name="info-circle" />
           <span>关于</span>
         </div>
-        <div class="setting-card">
+        <div class="setting-card app-card">
           <div class="setting-item">
             <div class="item-info">
               <div class="item-label">版本信息</div>

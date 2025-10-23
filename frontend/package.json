@@ -1,10 +1,27 @@
 {
-  "name": "2fa-frontend-dist",
-  "version": "2.9.0",
-  "description": "2FA Notebook - 前端编译产物",
+  "name": "2fa-frontend",
+  "version": "3.1.0",
+  "description": "2FA Notebook - 前端项目",
   "private": true,
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
     "preview": "vite preview --port 8080"
   },
-  "note": "此目录包含已编译的前端文件，可直接用于生产部署"
+  "dependencies": {
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.4",
+    "vue-i18n": "^9.5.0",
+    "pinia": "^2.1.6",
+    "tdesign-vue-next": "^1.6.0",
+    "tdesign-icons-vue-next": "^0.2.0",
+    "axios": "^1.5.0",
+    "speakeasy": "^2.0.0",
+    "qrcode": "^1.5.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.3.4",
+    "vite": "^4.5.0",
+    "vite-plugin-pwa": "^0.16.5"
+  }
 }

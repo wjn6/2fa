@@ -11,14 +11,14 @@
       </div>
     </div>
 
-    <div class="profile-content">
+    <div class="profile-content app-container">
       <!-- 用户信息卡片 -->
       <div class="info-section">
         <div class="section-title">
           <t-icon name="user" />
           <span>基本信息</span>
         </div>
-        <div class="info-card">
+        <div class="info-card app-card">
           <div class="avatar-section">
             <div class="avatar">
               <t-icon name="user" size="40px" />
@@ -99,7 +99,7 @@
           <t-icon name="lock-on" />
           <span>安全设置</span>
         </div>
-        <div class="security-card">
+        <div class="security-card app-card">
           <div class="security-item" @click="showChangePasswordDialog">
             <div class="item-left">
               <t-icon name="secured" class="item-icon" />
@@ -726,4 +726,5 @@ onMounted(() => {
   }
 }
 </style>
+
 

@@ -284,3 +284,116 @@ exports.validateApiKey = (apiKey) => {
 module.exports = exports;
 
 
+// ---------------------- 管理员专用接口 ----------------------
+/**
+ * 管理员：获取所有 API 密钥（可选筛选）
+ */
+exports.adminListApiKeys = (req, res) => {
+  try {
+    const { userId, isActive, permissions } = req.query;
+
+    let where = '1=1';
+    const params = [];
+
+    if (userId) {
+      where += ' AND ak.user_id = ?';
+      params.push(parseInt(userId));
+    }
+    if (isActive !== undefined) {
+      where += ' AND ak.is_active = ?';
+      params.push(isActive === '1' || isActive === 'true' ? 1 : 0);
+    }
+    if (permissions) {
+      where += ' AND ak.permissions = ?';
+      params.push(permissions);
+    }
+
+    const list = db.prepare(`
+      SELECT ak.*, u.username
+      FROM api_keys ak
+      JOIN users u ON ak.user_id = u.id
+      WHERE ${where}
+      ORDER BY ak.created_at DESC
+    `).all(...params);
+
+    res.json({ success: true, data: list });
+  } catch (error) {
+    console.error('获取API密钥列表失败:', error);
+    res.status(500).json({ success: false, message: '获取API密钥失败' });
+  }
+};
+
+/**
+ * 管理员：更新任意 API 密钥
+ */
+exports.adminUpdateApiKey = (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, permissions, isActive } = req.body;
+
+    const updates = [];
+    const values = [];
+    if (name !== undefined) { updates.push('name = ?'); values.push(name); }
+    if (permissions !== undefined) { updates.push('permissions = ?'); values.push(permissions); }
+    if (isActive !== undefined) { updates.push('is_active = ?'); values.push(isActive ? 1 : 0); }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ success: false, message: '没有要更新的字段' });
+    }
+
+    values.push(id);
+    db.prepare(`UPDATE api_keys SET ${updates.join(', ')}, updated_at = datetime('now') WHERE id = ?`).run(...values);
+
+    // 记录操作日志
+    db.prepare(`
+      INSERT INTO operation_logs (user_id, username, action, resource_type, resource_id, details, ip_address, user_agent, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      req.user.id,
+      req.user.username,
+      '管理员更新API密钥',
+      'api_key',
+      id,
+      JSON.stringify({ name, permissions, isActive }),
+      req.ip,
+      req.get('user-agent'),
+      'success'
+    );
+
+    res.json({ success: true, message: '更新成功' });
+  } catch (error) {
+    console.error('管理员更新API密钥失败:', error);
+    res.status(500).json({ success: false, message: '更新失败' });
+  }
+};
+
+/**
+ * 管理员：删除任意 API 密钥
+ */
+exports.adminDeleteApiKey = (req, res) => {
+  try {
+    const { id } = req.params;
+    db.prepare('DELETE FROM api_keys WHERE id = ?').run(id);
+
+    // 记录操作日志
+    db.prepare(`
+      INSERT INTO operation_logs (user_id, username, action, resource_type, resource_id, details, ip_address, user_agent, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      req.user.id,
+      req.user.username,
+      '管理员删除API密钥',
+      'api_key',
+      id,
+      null,
+      req.ip,
+      req.get('user-agent'),
+      'success'
+    );
+
+    res.json({ success: true, message: '删除成功' });
+  } catch (error) {
+    console.error('管理员删除API密钥失败:', error);
+    res.status(500).json({ success: false, message: '删除失败' });
+  }
+};

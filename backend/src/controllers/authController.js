@@ -13,7 +13,7 @@ exports.login = (req, res) => {
       return res.status(400).json({ success: false, message: '用户名和密码不能为空' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
     if (!user || !user.is_active) {
       return res.status(401).json({ success: false, message: '用户名或密码错误' });
@@ -28,7 +28,7 @@ exports.login = (req, res) => {
     // 更新最后登录时间
     db.prepare('UPDATE users SET last_login = datetime(\'now\') WHERE id = ?').run(user.id);
 
-    const token = generateToken(user.id);
+  const token = generateToken({ id: user.id, username: user.username, role: user.role });
 
     res.json({
       success: true,

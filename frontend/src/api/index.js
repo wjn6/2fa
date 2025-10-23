@@ -164,4 +164,19 @@ export const adminApi = {
   optimizeDatabase: () => api.post('/admin/optimize-database')
 }
 
+// API 密钥相关 API（用户维度）
+export const apiKeysApi = {
+  list: () => api.get('/api-keys'),
+  create: (data) => api.post('/api-keys', data),
+  update: (id, data) => api.put(`/api-keys/${id}`, data),
+  delete: (id) => api.delete(`/api-keys/${id}`)
+}
+
+// API 密钥相关 API（管理员全量）
+export const adminApiKeysApi = {
+  list: (params) => api.get('/admin/api-keys', { params }),
+  update: (id, data) => api.put(`/admin/api-keys/${id}`, data),
+  delete: (id) => api.delete(`/admin/api-keys/${id}`)
+}
+
 export default api

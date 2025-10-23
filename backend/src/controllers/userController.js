@@ -139,15 +139,7 @@ exports.login = async (req, res) => {
     `).run(ip, user.id);
 
     // 生成 JWT Token
-    const token = jwt.sign(
-      { 
-        id: user.id, 
-        username: user.username, 
-        role: user.role 
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
     // 记录成功的登录
     recordLoginLog(user.id, username, 'password', 'success', ip, userAgent);

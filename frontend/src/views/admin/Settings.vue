@@ -1,6 +1,8 @@
 <template>
-  <div class="settings">
-    <h1>系统设置</h1>
+  <div class="settings p-16">
+    <div class="page-header">
+      <h1>系统设置</h1>
+    </div>
 
     <t-card title="自动备份" style="margin-top: 24px;">
       <t-form>
@@ -24,7 +26,7 @@
       </t-form>
     </t-card>
 
-    <div style="margin-top: 24px;">
+    <div style="margin-top: 16px;">
       <t-button theme="primary" @click="saveSettings">保存设置</t-button>
     </div>
   </div>
@@ -76,3 +78,10 @@ onMounted(() => {
 })
 </script>
 
+<style scoped>
+.page-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+</style>

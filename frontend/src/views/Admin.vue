@@ -27,6 +27,14 @@
               <template #icon><t-icon name="chart-line" /></template>
               使用日志
             </t-menu-item>
+            <t-menu-item value="api-keys">
+              <template #icon><t-icon name="key" /></template>
+              API 密钥
+            </t-menu-item>
+            <t-menu-item value="theme">
+              <template #icon><t-icon name="palette" /></template>
+              主题定制
+            </t-menu-item>
           </t-menu>
         </div>
       </t-aside>
@@ -63,8 +71,10 @@
         
         <!-- 内容区 -->
         <t-content>
-          <div class="admin-content">
-            <router-view />
+          <div class="admin-content app-container">
+            <div class="admin-card app-card">
+              <router-view />
+            </div>
           </div>
         </t-content>
       </t-layout>
@@ -100,6 +110,14 @@
           <template #icon><t-icon name="chart-line" /></template>
           使用日志
         </t-menu-item>
+        <t-menu-item value="api-keys">
+          <template #icon><t-icon name="key" /></template>
+          API 密钥
+        </t-menu-item>
+        <t-menu-item value="theme">
+          <template #icon><t-icon name="palette" /></template>
+          主题定制
+        </t-menu-item>
       </t-menu>
     </t-drawer>
   </div>
@@ -131,6 +149,14 @@ onMounted(() => {
 })
 
 const handleMenuChange = (value) => {
+  if (value === 'api-keys') {
+    router.push('/api-keys')
+    return
+  }
+  if (value === 'theme') {
+    router.push('/theme')
+    return
+  }
   router.push(`/admin/${value}`)
 }
 

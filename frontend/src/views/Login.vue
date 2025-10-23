@@ -1,23 +1,18 @@
 <template>
   <div class="login-container">
-    <div class="login-box" :class="{ 'shake': showShake }">
+    <div class="login-card app-card fade-in" :class="{ 'shake': showShake }">
       <!-- 图标 -->
-      <div class="login-icon">
-        <t-icon :name="isAdminMode ? 'secured' : 'user'" />
-      </div>
-
-      <!-- 标题 -->
-      <h1 class="login-title">2FA Authenticator</h1>
-      <p class="login-subtitle">{{ isAdminMode ? '管理员登录' : '用户登录' }}</p>
-
-      <!-- 登录模式切换 -->
-      <div class="mode-switch">
-        <t-button 
-          variant="text" 
-          size="small" 
-          @click="toggleMode"
-          class="switch-btn"
-        >
+      <div class="login-header">
+        <div class="brand">
+          <div class="brand-logo rounded-md">
+            <t-icon :name="isAdminMode ? 'secured' : 'user'" />
+          </div>
+          <div class="brand-meta">
+            <h1 class="login-title">2FA Authenticator</h1>
+            <p class="login-subtitle">{{ isAdminMode ? '管理员登录' : '用户登录' }}</p>
+          </div>
+        </div>
+        <t-button variant="text" size="small" @click="toggleMode" class="switch-btn">
           <t-icon :name="isAdminMode ? 'user' : 'secured'" />
           <span>切换到{{ isAdminMode ? '用户' : '管理员' }}登录</span>
         </t-button>
@@ -69,9 +64,7 @@
       <!-- 注册链接（普通用户模式） -->
       <div v-if="!isAdminMode" class="login-footer">
         <span>还没有账号？</span>
-        <t-button variant="text" size="small" @click="$router.push('/register')">
-          立即注册
-        </t-button>
+        <t-button variant="text" size="small" @click="$router.push('/register')">立即注册</t-button>
       </div>
 
       <!-- 返回 -->
@@ -201,23 +194,23 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-}
+  .login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0b1526 0%, #0f284f 100%);
+    padding: 24px;
+  }
 
-.login-box {
-  background: var(--td-bg-color-container);
-  border-radius: 16px;
-  padding: 48px 40px;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
+  .login-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 36px 32px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+  }
 
 .login-box.shake {
   animation: shake 0.5s;
@@ -229,38 +222,43 @@ const handleLogin = async () => {
   20%, 40%, 60%, 80% { transform: translateX(8px); }
 }
 
-.login-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  color: white;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-}
+  .login-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-logo {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #0050b3 0%, #1890ff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(24, 144, 255, 0.25);
+  }
+
+  .brand-meta { display: flex; flex-direction: column; }
 
 .login-title {
-  font-size: 28px;
-  font-weight: 600;
-  text-align: center;
-  margin: 0 0 8px 0;
-  color: var(--td-text-color-primary);
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-color);
 }
 
 .login-subtitle {
-  text-align: center;
-  color: var(--td-text-color-placeholder);
-  margin: 0 0 16px 0;
-  font-size: 14px;
-}
-
-.mode-switch {
-  text-align: center;
-  margin-bottom: 24px;
+  color: var(--text-secondary);
+  margin: 2px 0 0 0;
+  font-size: 12px;
 }
 
 .switch-btn {
@@ -271,11 +269,12 @@ const handleLogin = async () => {
   gap: 6px;
 }
 
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+  }
 
 .input-wrapper {
   position: relative;
@@ -288,49 +287,33 @@ const handleLogin = async () => {
   text-align: center;
 }
 
-.login-button {
-  margin-top: 8px;
-  height: 44px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 8px;
-}
+  .login-button {
+    margin-top: 8px;
+    height: 44px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+  }
 
-.login-footer {
-  margin-top: 16px;
-  text-align: center;
-  color: var(--td-text-color-secondary);
-  font-size: 14px;
-}
+  .login-footer {
+    margin-top: 12px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
 
 .login-footer span {
   margin-right: 8px;
 }
 
 /* 暗色模式 */
-.dark .login-container {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-}
-
-.dark .login-box {
-  background: var(--td-bg-color-container);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-}
+  .dark .login-container {
+    background: linear-gradient(135deg, #0b0f1a 0%, #0f1e3a 100%);
+  }
 
 /* 响应式 */
 @media (max-width: 480px) {
-  .login-box {
-    padding: 32px 24px;
-  }
-
-  .login-icon {
-    width: 64px;
-    height: 64px;
-    font-size: 32px;
-  }
-
-  .login-title {
-    font-size: 24px;
-  }
+  .login-card { padding: 28px 24px; }
+  .login-title { font-size: 20px; }
 }
 </style>

@@ -63,8 +63,8 @@ RUN mkdir -p /app/backend/data
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-# 暴露端口（只需要一个端口）
-EXPOSE 80
+# 暴露端口（统一 5555）
+EXPOSE 5555
 
 # 启动脚本
 CMD ["/start.sh"]

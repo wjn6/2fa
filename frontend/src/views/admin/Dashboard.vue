@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard">
+  <div class="dashboard p-16">
     <div class="dashboard-header">
       <h1>统计仪表盘</h1>
       <span class="update-time">最后更新：刚刚</span>
@@ -182,6 +182,7 @@ onMounted(() => {
 .table-card {
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 6px 24px var(--shadow-light);
 }
 
 /* 响应式 */

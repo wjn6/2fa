@@ -51,47 +51,47 @@ router.post('/users/change-password', authenticateToken, userController.changePa
 
 // ==================== 需要解锁的路由 ====================
 
-// 分类路由
-router.get('/categories', categoryController.getAllCategories);
-router.post('/categories', categoryController.createCategory);
-router.put('/categories/:id', categoryController.updateCategory);
-router.delete('/categories/:id', categoryController.deleteCategory);
+// 分类路由（需登录）
+router.get('/categories', authenticateToken, categoryController.getAllCategories);
+router.post('/categories', authenticateToken, categoryController.createCategory);
+router.put('/categories/:id', authenticateToken, categoryController.updateCategory);
+router.delete('/categories/:id', authenticateToken, categoryController.deleteCategory);
 
-// 标签路由
-router.get('/tags', tagController.getAllTags);
-router.post('/tags', tagController.createTag);
-router.put('/tags/:id', tagController.updateTag);
-router.delete('/tags/:id', tagController.deleteTag);
-router.get('/tags/:id/secrets', tagController.getSecretsByTag);
+// 标签路由（需登录）
+router.get('/tags', authenticateToken, tagController.getAllTags);
+router.post('/tags', authenticateToken, tagController.createTag);
+router.put('/tags/:id', authenticateToken, tagController.updateTag);
+router.delete('/tags/:id', authenticateToken, tagController.deleteTag);
+router.get('/tags/:id/secrets', authenticateToken, tagController.getSecretsByTag);
 
-// 密钥路由
-router.get('/secrets', secretController.getAllSecrets);
-router.get('/secrets/:id', secretController.getSecretDetail);
-router.post('/secrets', secretController.createSecret);
-router.put('/secrets/:id', secretController.updateSecret);
-router.delete('/secrets/:id', secretController.deleteSecret);
-router.post('/secrets/batch-delete', secretController.batchDeleteSecrets);
-router.post('/secrets/batch-update-category', secretController.batchUpdateCategory);
-router.post('/secrets/update-sort', secretController.updateSort);
-router.post('/secrets/:id/toggle-favorite', secretController.toggleFavorite);
-router.post('/secrets/:id/toggle-pin', secretController.togglePin);
+// 密钥路由（需登录，token 生成额外允许锁状态）
+router.get('/secrets', authenticateToken, secretController.getAllSecrets);
+router.get('/secrets/:id', authenticateToken, secretController.getSecretDetail);
+router.post('/secrets', authenticateToken, secretController.createSecret);
+router.put('/secrets/:id', authenticateToken, secretController.updateSecret);
+router.delete('/secrets/:id', authenticateToken, secretController.deleteSecret);
+router.post('/secrets/batch-delete', authenticateToken, secretController.batchDeleteSecrets);
+router.post('/secrets/batch-update-category', authenticateToken, secretController.batchUpdateCategory);
+router.post('/secrets/update-sort', authenticateToken, secretController.updateSort);
+router.post('/secrets/:id/toggle-favorite', authenticateToken, secretController.toggleFavorite);
+router.post('/secrets/:id/toggle-pin', authenticateToken, secretController.togglePin);
 
-// Token 生成
-router.get('/secrets/:id/token', secretController.generateToken);
-router.get('/tokens', secretController.generateAllTokens);
+// Token 生成（需登录）
+router.get('/secrets/:id/token', authenticateToken, secretController.generateToken);
+router.get('/tokens', authenticateToken, secretController.generateAllTokens);
 
-// 二维码相关
-router.post('/qrcode/upload', qrcodeController.uploadAndParse);
-router.post('/qrcode/generate', qrcodeController.generateQRCode);
-router.post('/qrcode/parse-url', qrcodeController.parseOtpauthUrl);
+// 二维码相关（需登录）
+router.post('/qrcode/upload', authenticateToken, qrcodeController.uploadAndParse);
+router.post('/qrcode/generate', authenticateToken, qrcodeController.generateQRCode);
+router.post('/qrcode/parse-url', authenticateToken, qrcodeController.parseOtpauthUrl);
 
-// 备份和恢复路由
-router.get('/backup/export', backupController.exportData);
-router.post('/backup/export-encrypted', backupController.exportEncrypted);
-router.post('/backup/import', backupController.importData);
-router.get('/backup/history', backupController.getBackupHistory);
-router.post('/backup/auto', backupController.autoBackup);
-router.post('/backup/import-google', backupController.importGoogleAuthenticator);
+// 备份和恢复路由（需登录）
+router.get('/backup/export', authenticateToken, backupController.exportData);
+router.post('/backup/export-encrypted', authenticateToken, backupController.exportEncrypted);
+router.post('/backup/import', authenticateToken, backupController.importData);
+router.get('/backup/history', authenticateToken, backupController.getBackupHistory);
+router.post('/backup/auto', authenticateToken, backupController.autoBackup);
+router.post('/backup/import-google', authenticateToken, backupController.importGoogleAuthenticator);
 
 // ==================== 管理员路由 ====================
 
@@ -151,17 +151,22 @@ router.get('/admin/export/all', authenticateUser, requireAdmin, exportController
 router.get('/admin/export/table/:table', authenticateUser, requireAdmin, exportController.exportTable);
 router.post('/admin/import/all', authenticateUser, requireAdmin, exportController.importAllData);
 
-// 密钥模板（公开访问）
-router.get('/templates', templateController.getAllTemplates);
-router.get('/templates/search', templateController.searchTemplates);
-router.get('/templates/categories', templateController.getCategories);
-router.get('/templates/:id', templateController.getTemplateById);
+// 密钥模板（需登录）
+router.get('/templates', authenticateToken, templateController.getAllTemplates);
+router.get('/templates/search', authenticateToken, templateController.searchTemplates);
+router.get('/templates/categories', authenticateToken, templateController.getCategories);
+router.get('/templates/:id', authenticateToken, templateController.getTemplateById);
 
-// API密钥管理（需要登录）
-router.get('/api-keys', authenticateUser, apiKeyController.getApiKeys);
-router.post('/api-keys', authenticateUser, apiKeyController.createApiKey);
-router.put('/api-keys/:id', authenticateUser, apiKeyController.updateApiKey);
-router.delete('/api-keys/:id', authenticateUser, apiKeyController.deleteApiKey);
+// API密钥管理（需要登录，管理员可管理所有，普通用户管理自己的）
+router.get('/api-keys', authenticateToken, apiKeyController.getApiKeys);
+router.post('/api-keys', authenticateToken, apiKeyController.createApiKey);
+router.put('/api-keys/:id', authenticateToken, apiKeyController.updateApiKey);
+router.delete('/api-keys/:id', authenticateToken, apiKeyController.deleteApiKey);
+
+// API密钥管理（管理员 - 全量管理接口）
+router.get('/admin/api-keys', authenticateUser, requireAdmin, apiKeyController.adminListApiKeys);
+router.put('/admin/api-keys/:id', authenticateUser, requireAdmin, apiKeyController.adminUpdateApiKey);
+router.delete('/admin/api-keys/:id', authenticateUser, requireAdmin, apiKeyController.adminDeleteApiKey);
 
 // 邮件管理（需要管理员权限）
 router.get('/admin/email/config', authenticateUser, requireAdmin, emailController.getEmailConfig);

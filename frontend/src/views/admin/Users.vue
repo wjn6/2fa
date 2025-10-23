@@ -1,5 +1,5 @@
 <template>
-  <div class="users">
+  <div class="users p-16">
     <div class="page-header">
       <h1>用户管理</h1>
       <t-button theme="primary" @click="showAddDialog">
@@ -8,7 +8,7 @@
       </t-button>
     </div>
 
-    <t-table :data="users" :columns="columns" style="margin-top: 24px;">
+    <t-table :data="users" :columns="columns" style="margin-top: 16px;" stripe hover>
       <template #operation="{ row }">
         <t-space>
           <t-button size="small" @click="editUser(row)">编辑</t-button>
@@ -112,6 +112,13 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 8px;
+}
+
+.page-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
 }
 </style>
 

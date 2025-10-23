@@ -15,6 +15,16 @@ body {
   min-height: 100vh;
 }
 
+/* 链接与交互色统一 */
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:hover {
+  opacity: 0.85;
+}
+
 /* 滚动条样式 */
 ::-webkit-scrollbar {
   width: 8px;
@@ -68,6 +78,9 @@ body {
   body {
     font-size: 14px;
   }
+  .app-container {
+    padding: 12px;
+  }
 }
 
 /* 辅助类 */
@@ -90,5 +103,10 @@ body {
 .p-16 {
   padding: 16px;
 }
+
+/* 统一圆角工具类 */
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
 
 

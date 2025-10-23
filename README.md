@@ -1,4 +1,4 @@
-﻿# 2FA Notebook - 双因素认证管理系统 v2.9
+﻿# 2FA Notebook - 双因素认证管理系统 v3.1
 
 一个功能完整、安全可靠的双因素认证（2FA）管理系统，支持多用户、完善的管理后台、邮件通知等企业级功能。
 
@@ -48,7 +48,7 @@ cd 2fa
 docker-compose up -d
 
 # 3. 访问应用
-# 地址: http://localhost:5656
+# 地址: http://localhost:5555
 # 默认账号: admin / admin123
 
 # 4. 查看日志
@@ -100,10 +100,10 @@ openssl rand -base64 32
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| 前端 | 5656 | Web 界面 |
-| 后端 | 5555 | API 接口 |
+| Nginx | 5555 | Web 界面（对外） |
+| 后端 | 5556 | API 接口（容器内） |
 
-修改端口：编辑 `docker-compose.yml` 中的 `ports` 配置
+修改端口：编辑 `docker-compose.yml` 与 `nginx.conf`
 
 ## 💾 数据备份
 
@@ -127,8 +127,8 @@ docker-compose ps
 # 重启服务
 docker-compose restart
 
-# 测试后端 API
-curl http://localhost:5555/api/health
+# 测试后端 API（健康检查由 Nginx 直达）
+curl http://localhost:5555/health
 ```
 
 ### 手动部署
@@ -181,14 +181,14 @@ docker run -p 5656:80 2fa-frontend
 
 #### 后端环境变量 (.env)
 ```bash
-PORT=5555                    # 服务端口
+PORT=5556                    # 后端服务端口（容器内，对内）
 JWT_SECRET=your-secret-key   # JWT密钥
 DATABASE_PATH=./data/2fa.db  # 数据库路径
 ```
 
 #### 前端环境变量
 ```bash
-VITE_API_URL=http://localhost:5555/api  # API地址
+VITE_API_URL=http://localhost:5556      # 开发代理指向后端（vite.config 已内置）
 ```
 
 ### 邮件配置
@@ -282,12 +282,12 @@ VITE_API_URL=http://localhost:5555/api  # API地址
 
 ### 本地开发
 ```bash
-# 后端（端口5555）
+# 后端（端口5556）
 cd backend
 npm install
 npm run dev
 
-# 前端（端口5555，代理到后端）
+# 前端（端口5173，代理到后端 5556）
 cd frontend
 npm install
 npm run dev

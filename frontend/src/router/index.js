@@ -62,6 +62,18 @@ const routes = [
     meta: { requiresUnlock: true }
   },
   {
+    path: '/api-keys',
+    name: 'ApiKeys',
+    component: () => import('../views/ApiKeys.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/theme',
+    name: 'ThemeCustom',
+    component: () => import('../views/ThemeCustom.vue'),
+    meta: { requiresUnlock: true }
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: () => import('../views/Profile.vue'),
@@ -87,6 +99,11 @@ router.beforeEach((to, from, next) => {
   // 需要管理员登录的页面
   if (to.meta.requiresAuth && !appStore.isAuthenticated) {
     next('/login')
+    return
+  }
+  // 仅管理员访问
+  if (to.meta.requiresAdmin && appStore.user?.role !== 'admin') {
+    next('/')
     return
   }
   

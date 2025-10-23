@@ -4,7 +4,7 @@ const db = require('../database');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 /**
- * 验证用户登录（后台管理）
+ * 验证用户登录（后台管理） - 使用统一 JWT 载荷 { id, username, role }
  */
 function authenticateUser(req, res, next) {
   try {
@@ -15,13 +15,13 @@ function authenticateUser(req, res, next) {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    const user = db.prepare('SELECT id, username, email, role FROM users WHERE id = ? AND is_active = 1').get(decoded.userId);
+    const user = db.prepare('SELECT id, username, email, role, is_active FROM users WHERE id = ?').get(decoded.id);
 
-    if (!user) {
+    if (!user || !user.is_active) {
       return res.status(401).json({ success: false, message: '用户不存在或已被禁用' });
     }
 
-    req.user = user;
+    req.user = { id: user.id, username: user.username, email: user.email, role: user.role };
     next();
   } catch (error) {
     return res.status(401).json({ success: false, message: '认证失败' });
@@ -59,10 +59,10 @@ function requireUnlocked(req, res, next) {
 }
 
 /**
- * 生成JWT token
+ * 生成JWT token - 统一载荷 { id, username, role }
  */
-function generateToken(userId) {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
+function generateToken(user) {
+  return jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 module.exports = {

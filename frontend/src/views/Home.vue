@@ -2,7 +2,7 @@
   <div class="home">
     <!-- 顶部导航栏 -->
     <div class="header">
-      <div class="header-container">
+      <div class="header-container app-container">
         <!-- 品牌 Logo -->
         <div class="header-left">
           <div class="brand-logo">
@@ -110,7 +110,7 @@
     </div>
 
     <!-- 主内容区 -->
-    <div class="main-content">
+    <div class="main-content app-container">
       <!-- P1 优化：收藏快速访问栏 -->
       <div v-if="!loading && favoriteSecrets.length > 0" class="favorites-bar">
         <div class="favorites-header">
@@ -158,7 +158,7 @@
       <t-loading v-else-if="loading" size="large" text="加载中..." />
 
       <!-- 桌面端表格 -->
-      <div v-else class="table-container desktop-view">
+      <div v-else class="table-container desktop-view app-card">
         <table class="secret-table">
           <thead>
             <tr>
@@ -381,7 +381,7 @@
     <t-dialog
       v-model:visible="secretDialogVisible"
       :header="secretDialogTitle"
-      :width="isMobile ? '90%' : '600px'"
+      :width="isMobile ? '92%' : '600px'"
       @confirm="handleSecretSubmit"
     >
       <t-form :data="secretForm" label-width="80px">
@@ -412,7 +412,7 @@
     <t-dialog
       v-model:visible="importDialogVisible"
       header="导入数据"
-      :width="isMobile ? '90%' : '500px'"
+      :width="isMobile ? '92%' : '500px'"
       @confirm="handleImport"
     >
       <t-form>
@@ -432,7 +432,7 @@
     <t-dialog
       v-model:visible="qrUploadDialogVisible"
       header="扫描二维码"
-      :width="isMobile ? '90%' : '500px'"
+      :width="isMobile ? '92%' : '500px'"
       :footer="false"
       @close="closeQRUpload"
     >
@@ -535,6 +535,8 @@ const fileInputRef = ref(null)
 const menuOptions = [
   { content: '导出数据', value: 'export' },
   { content: '导入数据', value: 'import' },
+  { content: 'API 密钥', value: 'api-keys' },
+  { content: '主题定制', value: 'theme' },
   { content: '设置', value: 'settings' }
 ]
 
@@ -548,8 +550,10 @@ const userMenuOptions = computed(() => {
   // 管理员显示后台管理入口
   if (currentUser.value?.role === 'admin') {
     options.push({ content: '管理后台', value: 'admin', prefixIcon: 'dashboard' })
+    options.push({ content: 'API 密钥', value: 'api-keys', prefixIcon: 'key' })
   }
   
+  options.push({ content: '主题定制', value: 'theme', prefixIcon: 'palette' })
   options.push({ content: '退出登录', value: 'logout', prefixIcon: 'poweroff', theme: 'danger' })
   
   return options
@@ -574,11 +578,6 @@ const selectAll = computed({
 })
 
 const tokenProgress = computed(() => (tokenRemaining.value / 30) * 100)
-
-// 检测是否为移动端
-const isMobile = computed(() => {
-  return window.innerWidth <= 768
-})
 
 const filteredSecrets = computed(() => {
   let result = secrets.value
@@ -1010,6 +1009,12 @@ const handleMenu = async (data) => {
     case 'import':
       importDialogVisible.value = true
       break
+    case 'api-keys':
+      router.push('/api-keys')
+      break
+    case 'theme':
+      router.push('/theme')
+      break
     case 'settings':
       router.push('/settings')
       break
@@ -1032,6 +1037,12 @@ const handleUserMenu = async (data) => {
       break
     case 'admin':
       router.push('/admin')
+      break
+    case 'api-keys':
+      router.push('/api-keys')
+      break
+    case 'theme':
+      router.push('/theme')
       break
     case 'logout':
       const confirm = await DialogPlugin.confirm({
@@ -1273,8 +1284,8 @@ onUnmounted(() => {
 }
 
 .header {
-  background: linear-gradient(to bottom, #ffffff 0%, #fafafa 100%);
-  border-bottom: 1px solid #e8e8e8;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   position: sticky;
   top: 0;
@@ -1289,12 +1300,10 @@ onUnmounted(() => {
 }
 
 .header-container {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 12px 32px;
+  padding: 12px 16px;
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 32px;
+  gap: 24px;
   align-items: center;
 }
 
@@ -1649,10 +1658,10 @@ onUnmounted(() => {
 }
 
 .table-container {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #f0f0f0;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02);
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 6px 24px var(--shadow-light);
   overflow: hidden;
 }
 

@@ -3,23 +3,22 @@ const db = require('../database');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// 验证 JWT Token
+// 验证 JWT Token（统一载荷 { id, username, role }）
 exports.authenticateToken = (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
       return res.status(401).json({ success: false, message: '未提供认证令牌' });
     }
 
-    jwt.verify(token, JWT_SECRET, (err, user) => {
+    jwt.verify(token, JWT_SECRET, (err, payload) => {
       if (err) {
         return res.status(403).json({ success: false, message: '令牌无效或已过期' });
       }
 
-      // 检查用户是否仍然存在且激活
-      const dbUser = db.prepare('SELECT id, username, role, is_active FROM users WHERE id = ?').get(user.id);
+      const dbUser = db.prepare('SELECT id, username, role, is_active FROM users WHERE id = ?').get(payload.id);
       
       if (!dbUser) {
         return res.status(404).json({ success: false, message: '用户不存在' });

@@ -1,14 +1,21 @@
 <template>
   <div class="register-container">
-    <div class="register-box" :class="{ 'shake': showShake }">
-      <!-- 图标 -->
-      <div class="register-icon">
-        <t-icon name="user-add" />
+    <div class="register-card app-card fade-in" :class="{ 'shake': showShake }">
+      <div class="register-header">
+        <div class="brand">
+          <div class="brand-logo rounded-md">
+            <t-icon name="user-add" />
+          </div>
+          <div class="brand-meta">
+            <h1 class="register-title">创建账号</h1>
+            <p class="register-subtitle">注册 2FA Authenticator</p>
+          </div>
+        </div>
+        <t-button variant="text" size="small" @click="$router.push('/login')" class="switch-btn">
+          <t-icon name="login" />
+          <span>已有账号？去登录</span>
+        </t-button>
       </div>
-
-      <!-- 标题 -->
-      <h1 class="register-title">创建账号</h1>
-      <p class="register-subtitle">注册 2FA Authenticator</p>
 
       <!-- 注册表单 -->
       <t-form ref="formRef" :data="form" :rules="rules" @submit="handleRegister">
@@ -76,9 +83,7 @@
       <!-- 登录链接 -->
       <div class="register-footer">
         <span>已有账号？</span>
-        <t-button variant="text" size="small" @click="$router.push('/login')">
-          立即登录
-        </t-button>
+        <t-button variant="text" size="small" @click="$router.push('/login')">立即登录</t-button>
       </div>
     </div>
   </div>
@@ -176,17 +181,17 @@ const handleRegister = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  background: linear-gradient(135deg, #0b1526 0%, #0f284f 100%);
+  padding: 24px;
 }
 
-.register-box {
-  background: var(--td-bg-color-container);
-  border-radius: 16px;
-  padding: 48px 40px;
+.register-card {
   width: 100%;
-  max-width: 420px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 520px;
+  padding: 36px 32px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
 }
 
 .register-box.shake {
@@ -199,79 +204,30 @@ const handleRegister = async () => {
   20%, 40%, 60%, 80% { transform: translateX(8px); }
 }
 
-.register-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  color: white;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-}
+.register-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-logo { width: 44px; height: 44px; background: linear-gradient(135deg, #0050b3 0%, #1890ff 100%); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 8px 24px rgba(24, 144, 255, 0.25); }
+.brand-meta { display: flex; flex-direction: column; }
 
-.register-title {
-  font-size: 28px;
-  font-weight: 600;
-  text-align: center;
-  margin: 0 0 8px 0;
-  color: var(--td-text-color-primary);
-}
+.register-title { font-size: 22px; font-weight: 700; margin: 0; color: var(--text-color); }
 
-.register-subtitle {
-  text-align: center;
-  color: var(--td-text-color-placeholder);
-  margin: 0 0 32px 0;
-  font-size: 14px;
-}
+.register-subtitle { color: var(--text-secondary); margin: 2px 0 0 0; font-size: 12px; }
 
-.register-button {
-  margin-top: 8px;
-  height: 44px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 8px;
-}
+.register-button { margin-top: 8px; height: 44px; font-size: 16px; font-weight: 600; border-radius: var(--radius-md); }
 
-.register-footer {
-  margin-top: 24px;
-  text-align: center;
-  color: var(--td-text-color-secondary);
-  font-size: 14px;
-}
+.register-footer { margin-top: 16px; text-align: center; color: var(--text-secondary); font-size: 13px; }
 
 .register-footer span {
   margin-right: 8px;
 }
 
 /* 暗色模式 */
-.dark .register-container {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-}
-
-.dark .register-box {
-  background: var(--td-bg-color-container);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-}
+.dark .register-container { background: linear-gradient(135deg, #0b0f1a 0%, #0f1e3a 100%); }
 
 /* 响应式 */
 @media (max-width: 480px) {
-  .register-box {
-    padding: 32px 24px;
-  }
-
-  .register-icon {
-    width: 64px;
-    height: 64px;
-    font-size: 32px;
-  }
-
-  .register-title {
-    font-size: 24px;
-  }
+  .register-card { padding: 28px 24px; }
+  .register-title { font-size: 20px; }
 }
 </style>
 

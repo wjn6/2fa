@@ -1,8 +1,10 @@
 <template>
-  <div class="logs">
-    <h1>使用日志</h1>
+  <div class="logs p-16">
+    <div class="page-header">
+      <h1>使用日志</h1>
+    </div>
 
-    <t-table :data="logs" :columns="columns" style="margin-top: 24px;">
+    <t-table :data="logs" :columns="columns" style="margin-top: 16px;" stripe hover>
       <template #action="{ row }">
         {{ row.action }}
       </template>
@@ -37,3 +39,10 @@ onMounted(() => {
 })
 </script>
 
+<style scoped>
+.page-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+</style>

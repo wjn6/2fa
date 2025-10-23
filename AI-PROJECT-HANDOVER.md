@@ -25,10 +25,10 @@
 ### 整体架构
 ```
 单Docker容器 (2fa-app)
-├── Nginx :80 (Web服务器)
+├── Nginx :5555 (Web服务器)
 │   ├── 静态文件: /usr/share/nginx/html (Vue编译后)
-│   └── API代理: /api/* → http://127.0.0.1:3000
-└── Node.js :3000 (后端服务，仅容器内部访问)
+│   └── API代理: /api/* → http://127.0.0.1:5556
+└── Node.js :5556 (后端服务，仅容器内部访问)
     └── SQLite (data/database.db)
 ```
 
@@ -47,9 +47,9 @@
 | **容器** | Docker | 最新 | Alpine Linux基础镜像 |
 
 ### 端口配置
-- **宿主机**: 5656 (对外访问)
-- **容器内 Nginx**: 80
-- **容器内 Node.js**: 3000 (仅127.0.0.1，不对外)
+- **宿主机**: 5555 (对外访问)
+- **容器内 Nginx**: 5555
+- **容器内 Node.js**: 5556 (仅127.0.0.1，不对外)
 
 ---
 
@@ -224,7 +224,7 @@
 POST /api/users/register        # 用户注册
 POST /api/users/login           # 用户登录
 POST /api/auth/login            # 管理员登录
-GET  /api/health                # 健康检查
+GET  /health                    # 健康检查（Nginx 直达）
 ```
 
 ### 用户接口（需要登录）
@@ -310,7 +310,7 @@ cd 2fa
 docker-compose up -d
 
 # 3. 访问
-http://localhost:5656
+http://localhost:5555
 用户名: admin
 密码: admin123
 ```
@@ -320,12 +320,12 @@ http://localhost:5656
 # 后端
 cd backend
 npm install
-npm run dev  # http://localhost:5555
+npm run dev  # http://localhost:5556
 
 # 前端（另一个终端）
 cd frontend
 npm install
-npm run dev  # http://localhost:5656
+npm run dev  # http://localhost:5555
 ```
 
 ### 前端构建
@@ -413,7 +413,7 @@ SELECT * FROM users;
 
 ### 4. 端口冲突
 - 修改 `docker-compose.yml` 中的端口映射
-- 默认是 `5656:80`
+- 默认是 `5555:5555`
 
 ---
 
@@ -421,7 +421,7 @@ SELECT * FROM users;
 
 ### 关键配置文件
 1. **docker-compose.yml** - Docker编排配置
-   - 端口映射：5656:80
+   - 端口映射：5555:5555
    - 数据卷：./data:/app/backend/data
 
 2. **Dockerfile** - 容器构建
@@ -430,7 +430,7 @@ SELECT * FROM users;
 
 3. **nginx.conf** - Web服务器配置
    - 静态文件服务：/
-   - API反向代理：/api/*
+   - API反向代理：/api/*（代理至 127.0.0.1:5556）
 
 4. **start.sh** - 容器启动脚本
    - 启动Node.js后端
@@ -567,4 +567,5 @@ docker-compose restart
 **最后更新**: 2025-10-23  
 **版本**: v3.1  
 **状态**: ✅ 生产就绪
+
 
