@@ -1025,12 +1025,10 @@ const handleLock = () => {
 const handleUserMenu = async (data) => {
   switch (data.value) {
     case 'profile':
-      // TODO: 打开个人资料对话框
-      MessagePlugin.info('个人资料功能开发中...')
+      router.push('/profile')
       break
     case 'change-password':
-      // TODO: 打开修改密码对话框
-      MessagePlugin.info('修改密码功能开发中...')
+      router.push('/profile')
       break
     case 'admin':
       router.push('/admin')
