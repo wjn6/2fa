@@ -12,8 +12,19 @@ import TDesign from 'tdesign-vue-next'
 import './styles/global.css'
 import './styles/theme.css'
 
+// 引入全局错误处理
+import { setupGlobalErrorHandler } from './utils/errorHandler'
+
 const app = createApp(App)
 const pinia = createPinia()
+
+// 配置全局错误处理
+app.config.errorHandler = (err, instance, info) => {
+  console.error('Vue Error:', err, info)
+}
+
+// 设置全局错误监听
+setupGlobalErrorHandler()
 
 app.use(pinia)
 app.use(router)

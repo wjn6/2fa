@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { MessagePlugin } from 'tdesign-vue-next'
 
 const routes = [
   {
@@ -65,7 +66,7 @@ const routes = [
     path: '/api-keys',
     name: 'ApiKeys',
     component: () => import('../views/ApiKeys.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true }
+    meta: { requiresAuth: true }
   },
   {
     path: '/theme',
@@ -90,20 +91,52 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const appStore = useAppStore()
   
-  // 需要解锁的页面
-  if (to.meta.requiresUnlock && appStore.isLocked) {
-    next('/unlock')
+  // 设置页面标题
+  document.title = to.meta.title ? `${to.meta.title} - 2FA Notebook` : '2FA Notebook'
+  
+  // 检查 Token 是否过期
+  const token = localStorage.getItem('token')
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        // Token 已过期
+        localStorage.removeItem('token')
+        appStore.logout()
+        if (to.meta.requiresAuth) {
+          MessagePlugin.warning('登录已过期，请重新登录')
+          next('/login')
+          return
+        }
+      }
+    } catch (e) {
+      console.error('Token 解析失败:', e)
+    }
+  }
+  
+  // 如果已登录，不允许访问登录/注册页
+  if ((to.name === 'Login' || to.name === 'Register') && appStore.isAuthenticated) {
+    next(appStore.user?.role === 'admin' ? '/admin' : '/')
     return
   }
   
   // 需要管理员登录的页面
   if (to.meta.requiresAuth && !appStore.isAuthenticated) {
-    next('/login')
+    MessagePlugin.warning('请先登录')
+    next({ path: '/login', query: { redirect: to.fullPath } })
     return
   }
+  
   // 仅管理员访问
   if (to.meta.requiresAdmin && appStore.user?.role !== 'admin') {
+    MessagePlugin.error('您没有权限访问此页面')
     next('/')
+    return
+  }
+  
+  // 需要解锁的页面
+  if (to.meta.requiresUnlock && appStore.isLocked) {
+    next('/unlock')
     return
   }
   
@@ -113,13 +146,13 @@ router.beforeEach((to, from, next) => {
     return
   }
   
-  // 如果已登录，不允许访问登录/注册页
-  if ((to.name === 'Login' || to.name === 'Register') && appStore.isAuthenticated) {
-    next('/admin')
-    return
-  }
-  
   next()
+})
+
+// 路由错误处理
+router.onError((error) => {
+  console.error('路由错误:', error)
+  MessagePlugin.error('页面加载失败，请刷新重试')
 })
 
 export default router

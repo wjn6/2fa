@@ -1,25 +1,32 @@
 <template>
-  <div class="dashboard p-16">
+  <div class="dashboard">
     <div class="dashboard-header">
       <h1>统计仪表盘</h1>
-      <span class="update-time">最后更新：刚刚</span>
+      <t-space>
+        <span class="update-time">最后更新：{{ updateTime }}</span>
+        <t-button variant="outline" size="small" @click="refreshData" :loading="loading">
+          <template #icon><t-icon name="refresh" /></template>
+          刷新
+        </t-button>
+      </t-space>
     </div>
     
-    <!-- 统计卡片 -->
-    <t-row :gutter="[16, 16]" class="stats-row">
-      <t-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
-        <t-card hover-shadow class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-              <t-icon name="secured" size="24px" />
+    <t-loading :loading="loading" size="large">
+      <!-- 统计卡片 -->
+      <t-row :gutter="[16, 16]" class="stats-row">
+        <t-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
+          <t-card hover-shadow class="stat-card">
+            <div class="stat-content">
+              <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <t-icon name="secured" size="24px" />
+              </div>
+              <div class="stat-info">
+                <div class="stat-label">密钥总数</div>
+                <div class="stat-value">{{ stats.totalSecrets || 0 }}</div>
+              </div>
             </div>
-            <div class="stat-info">
-              <div class="stat-label">密钥总数</div>
-              <div class="stat-value">{{ stats.totalSecrets || 0 }}</div>
-            </div>
-          </div>
-        </t-card>
-      </t-col>
+          </t-card>
+        </t-col>
       <t-col :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
         <t-card hover-shadow class="stat-card">
           <div class="stat-content">
@@ -61,37 +68,53 @@
       </t-col>
     </t-row>
 
-    <!-- 最常使用密钥表格 -->
-    <t-card title="最常使用密钥" class="table-card">
-      <t-table 
-        :data="stats.topSecrets || []" 
-        :columns="columns"
-        :max-height="400"
-        stripe
-        hover
-      />
-    </t-card>
+      <!-- 最常使用密钥表格 -->
+      <t-card title="最常使用密钥" class="table-card">
+        <t-table 
+          :data="stats.topSecrets || []" 
+          :columns="columns"
+          :max-height="400"
+          stripe
+          hover
+          :empty="'暂无数据'"
+        />
+      </t-card>
+    </t-loading>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { MessagePlugin } from 'tdesign-vue-next'
 import { adminApi } from '../../api'
 
 const stats = ref({})
+const loading = ref(false)
+const updateTime = ref('刚刚')
+
 const columns = [
-  { colKey: 'name', title: '名称' },
-  { colKey: 'issuer', title: '发行者' },
-  { colKey: 'use_count', title: '使用次数' }
+  { colKey: 'name', title: '名称', width: 200 },
+  { colKey: 'issuer', title: '发行者', width: 150 },
+  { colKey: 'use_count', title: '使用次数', width: 120, align: 'center' }
 ]
 
 const loadStats = async () => {
+  loading.value = true
   try {
     const res = await adminApi.getStatistics()
-    stats.value = res.data.data
+    stats.value = res.data.data || {}
+    updateTime.value = new Date().toLocaleTimeString('zh-CN', { hour12: false })
   } catch (error) {
-    console.error(error)
+    console.error('加载统计数据失败:', error)
+    MessagePlugin.error(error.response?.data?.message || '加载统计数据失败')
+  } finally {
+    loading.value = false
   }
+}
+
+const refreshData = async () => {
+  await loadStats()
+  MessagePlugin.success('数据已刷新')
 }
 
 onMounted(() => {
