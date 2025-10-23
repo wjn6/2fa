@@ -1,0 +1,515 @@
+/**
+ * 移动端优化样式
+ */
+
+/* 触摸反馈 */
+.touchable {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.1s;
+}
+
+.touchable:active {
+  transform: scale(0.98);
+  opacity: 0.8;
+}
+
+/* 移动端安全区域适配 */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-left {
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+  
+  .safe-area-right {
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+}
+
+/* 移动端滚动优化 */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 禁止选择文本（某些交互元素） */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* 移动端表格响应式 */
+@media (max-width: 768px) {
+  /* 表格卡片化 */
+  .mobile-table-card {
+    display: block !important;
+  }
+  
+  .mobile-table-card thead {
+    display: none;
+  }
+  
+  .mobile-table-card tbody,
+  .mobile-table-card tr {
+    display: block;
+  }
+  
+  .mobile-table-card tr {
+    margin-bottom: 12px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 12px;
+    background: white;
+  }
+  
+  [theme-mode="dark"] .mobile-table-card tr {
+    background: #2a2a2a;
+    border-color: #3a3a3a;
+  }
+  
+  .mobile-table-card td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0 !important;
+    border: none !important;
+  }
+  
+  .mobile-table-card td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #666;
+    min-width: 80px;
+  }
+  
+  [theme-mode="dark"] .mobile-table-card td::before {
+    color: #999;
+  }
+  
+  /* 隐藏不重要的列 */
+  .mobile-hidden {
+    display: none !important;
+  }
+}
+
+/* 移动端表单优化 */
+@media (max-width: 768px) {
+  .mobile-form .t-form-item {
+    margin-bottom: 16px;
+  }
+  
+  .mobile-form .t-form__label {
+    margin-bottom: 8px;
+  }
+  
+  .mobile-form .t-input,
+  .mobile-form .t-select,
+  .mobile-form .t-textarea {
+    width: 100% !important;
+  }
+  
+  .mobile-form .t-button {
+    width: 100%;
+  }
+}
+
+/* 移动端对话框优化 */
+@media (max-width: 768px) {
+  .t-dialog {
+    max-width: 95vw !important;
+    margin: 0 !important;
+  }
+  
+  .t-dialog__body {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}
+
+/* 移动端抽屉优化 */
+@media (max-width: 768px) {
+  .t-drawer {
+    max-width: 85vw !important;
+  }
+}
+
+/* 移动端按钮组优化 */
+@media (max-width: 768px) {
+  .mobile-button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .mobile-button-group .t-button {
+    width: 100%;
+  }
+}
+
+/* 移动端卡片优化 */
+@media (max-width: 768px) {
+  .mobile-card {
+    border-radius: 12px;
+    margin: 0 0 12px 0;
+  }
+  
+  .mobile-card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  [theme-mode="dark"] .mobile-card-header {
+    border-bottom-color: #3a3a3a;
+  }
+  
+  .mobile-card-body {
+    padding: 12px 16px;
+  }
+  
+  .mobile-card-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: 8px;
+  }
+  
+  [theme-mode="dark"] .mobile-card-footer {
+    border-top-color: #3a3a3a;
+  }
+}
+
+/* 移动端列表优化 */
+@media (max-width: 768px) {
+  .mobile-list-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 12px;
+  }
+  
+  [theme-mode="dark"] .mobile-list-item {
+    border-bottom-color: #3a3a3a;
+  }
+  
+  .mobile-list-item:active {
+    background: #f5f5f5;
+  }
+  
+  [theme-mode="dark"] .mobile-list-item:active {
+    background: #252525;
+  }
+  
+  .mobile-list-item-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #f5f5f5;
+  }
+  
+  [theme-mode="dark"] .mobile-list-item-icon {
+    background: #252525;
+  }
+  
+  .mobile-list-item-content {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .mobile-list-item-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  [theme-mode="dark"] .mobile-list-item-title {
+    color: #e5e5e5;
+  }
+  
+  .mobile-list-item-subtitle {
+    font-size: 12px;
+    color: #999;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .mobile-list-item-action {
+    flex-shrink: 0;
+  }
+}
+
+/* 移动端底部导航栏 */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: white;
+    border-top: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  [theme-mode="dark"] .mobile-bottom-nav {
+    background: #2a2a2a;
+    border-top-color: #3a3a3a;
+  }
+  
+  .mobile-bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s;
+  }
+  
+  [theme-mode="dark"] .mobile-bottom-nav-item {
+    color: #999;
+  }
+  
+  .mobile-bottom-nav-item.active {
+    color: var(--td-brand-color);
+  }
+  
+  .mobile-bottom-nav-item:active {
+    transform: scale(0.95);
+  }
+  
+  .mobile-bottom-nav-icon {
+    font-size: 20px;
+  }
+  
+  .mobile-bottom-nav-label {
+    font-size: 11px;
+  }
+}
+
+/* 移动端搜索栏优化 */
+@media (max-width: 768px) {
+  .mobile-search-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: white;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  
+  [theme-mode="dark"] .mobile-search-bar {
+    background: #2a2a2a;
+    border-bottom-color: #3a3a3a;
+  }
+  
+  .mobile-search-input {
+    width: 100%;
+  }
+}
+
+/* 移动端空状态 */
+@media (max-width: 768px) {
+  .mobile-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  
+  .mobile-empty-icon {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 12px;
+  }
+  
+  .mobile-empty-text {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 8px;
+  }
+  
+  .mobile-empty-desc {
+    font-size: 12px;
+    color: #bbb;
+  }
+}
+
+/* 移动端加载状态 */
+@media (max-width: 768px) {
+  .mobile-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  
+  .mobile-loading-text {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #999;
+  }
+}
+
+/* 移动端滑动操作 */
+@media (max-width: 768px) {
+  .mobile-swipe-item {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .mobile-swipe-content {
+    position: relative;
+    z-index: 1;
+    background: white;
+    transition: transform 0.3s;
+  }
+  
+  [theme-mode="dark"] .mobile-swipe-content {
+    background: #2a2a2a;
+  }
+  
+  .mobile-swipe-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    z-index: 0;
+  }
+  
+  .mobile-swipe-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  .mobile-swipe-action.delete {
+    background: #e34d59;
+  }
+  
+  .mobile-swipe-action.edit {
+    background: #0052d9;
+  }
+}
+
+/* 移动端 FAB 按钮 */
+@media (max-width: 768px) {
+  .mobile-fab {
+    position: fixed;
+    right: 16px;
+    bottom: 72px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--td-brand-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    z-index: 999;
+    transition: transform 0.2s;
+  }
+  
+  .mobile-fab:active {
+    transform: scale(0.9);
+  }
+  
+  .mobile-fab-icon {
+    font-size: 24px;
+  }
+}
+
+/* 移动端吸顶效果 */
+@media (max-width: 768px) {
+  .mobile-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+  
+  [theme-mode="dark"] .mobile-sticky {
+    background: #2a2a2a;
+  }
+}
+
+/* 移动端字体大小优化 */
+@media (max-width: 768px) {
+  .mobile-text-xs { font-size: 11px; }
+  .mobile-text-sm { font-size: 12px; }
+  .mobile-text-base { font-size: 14px; }
+  .mobile-text-lg { font-size: 16px; }
+  .mobile-text-xl { font-size: 18px; }
+  .mobile-text-2xl { font-size: 20px; }
+}
+
+/* 移动端间距优化 */
+@media (max-width: 768px) {
+  .mobile-p-xs { padding: 8px; }
+  .mobile-p-sm { padding: 12px; }
+  .mobile-p-base { padding: 16px; }
+  .mobile-p-lg { padding: 20px; }
+  
+  .mobile-m-xs { margin: 8px; }
+  .mobile-m-sm { margin: 12px; }
+  .mobile-m-base { margin: 16px; }
+  .mobile-m-lg { margin: 20px; }
+}
+
+/* 横屏优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .landscape-hide {
+    display: none !important;
+  }
+  
+  .mobile-bottom-nav {
+    height: 48px;
+  }
+}
+
+/* 超小屏幕优化 (< 375px) */
+@media (max-width: 375px) {
+  .xs-text-sm { font-size: 11px; }
+  .xs-text-base { font-size: 13px; }
+  .xs-p-sm { padding: 10px; }
+  .xs-m-sm { margin: 10px; }
+}
+

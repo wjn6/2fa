@@ -11,6 +11,7 @@ import TDesign from 'tdesign-vue-next'
 // 引入全局样式
 import './styles/global.css'
 import './styles/theme.css'
+import './styles/mobile.css'
 
 // 引入全局错误处理
 import { setupGlobalErrorHandler } from './utils/errorHandler'
