@@ -9,24 +9,26 @@
             <span>2FA Admin</span>
           </div>
         </div>
-        <t-menu v-model="activeMenu" theme="dark" @change="handleMenuChange">
-          <t-menu-item value="dashboard">
-            <template #icon><t-icon name="dashboard" /></template>
-            仪表盘
-          </t-menu-item>
-          <t-menu-item value="users">
-            <template #icon><t-icon name="user" /></template>
-            用户管理
-          </t-menu-item>
-          <t-menu-item value="settings">
-            <template #icon><t-icon name="setting" /></template>
-            系统设置
-          </t-menu-item>
-          <t-menu-item value="logs">
-            <template #icon><t-icon name="chart-line" /></template>
-            使用日志
-          </t-menu-item>
-        </t-menu>
+        <div class="menu-container">
+          <t-menu v-model="activeMenu" theme="dark" @change="handleMenuChange">
+            <t-menu-item value="dashboard">
+              <template #icon><t-icon name="dashboard" /></template>
+              仪表盘
+            </t-menu-item>
+            <t-menu-item value="users">
+              <template #icon><t-icon name="user" /></template>
+              用户管理
+            </t-menu-item>
+            <t-menu-item value="settings">
+              <template #icon><t-icon name="setting" /></template>
+              系统设置
+            </t-menu-item>
+            <t-menu-item value="logs">
+              <template #icon><t-icon name="chart-line" /></template>
+              使用日志
+            </t-menu-item>
+          </t-menu>
+        </div>
       </t-aside>
       
       <t-layout>
@@ -107,6 +109,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { DialogPlugin } from 'tdesign-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -141,8 +144,20 @@ const handleBack = () => {
 }
 
 const handleLogout = () => {
-  appStore.logout()
-  router.push('/login')
+  const dialog = DialogPlugin.confirm({
+    header: '退出登录',
+    body: '确定要退出登录吗？',
+    confirmBtn: '确定',
+    cancelBtn: '取消',
+    onConfirm: () => {
+      appStore.logout()
+      router.push('/login')
+      dialog.hide()
+    },
+    onCancel: () => {
+      dialog.hide()
+    }
+  })
 }
 </script>
 
@@ -155,11 +170,18 @@ const handleLogout = () => {
 /* 侧边栏 */
 .admin-aside {
   background: #1a1a1a !important;
+  height: 100vh !important;
+  display: flex;
+  flex-direction: column;
 }
 
 .aside-header {
-  padding: 20px 16px;
+  padding: 16px;
   border-bottom: 1px solid #3a3a3a;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .brand-logo {
@@ -169,6 +191,11 @@ const handleLogout = () => {
   color: #fff;
   font-size: 16px;
   font-weight: 600;
+}
+
+.menu-container {
+  flex: 1;
+  overflow-y: auto;
 }
 
 /* 头部 */
