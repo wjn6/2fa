@@ -37,21 +37,31 @@
 
 ## 🚀 快速开始
 
-### Docker 部署（推荐）
+### Docker 部署（推荐 - 单容器版本）
 
 ```bash
 # 1. 克隆仓库
 git clone https://github.com/wjn6/2fa.git
 cd 2fa
 
-# 2. 启动服务
+# 2. 启动服务（只需一个容器）
 docker-compose up -d
 
 # 3. 访问应用
-# 前端: http://localhost:5656
-# 后端: http://localhost:5555
+# 地址: http://localhost:5656
 # 默认账号: admin / admin123
+
+# 4. 查看日志
+docker logs 2fa-app
+
+# 5. 停止服务
+docker-compose down
 ```
+
+**优势**：
+- ✅ 单容器架构，无需配置网络
+- ✅ 自动启动，开箱即用
+- ✅ 数据持久化到 ./data 目录
 
 **⚠️ 首次登录后请立即修改密码！**
 
