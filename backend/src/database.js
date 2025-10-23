@@ -274,6 +274,27 @@ function initDatabase() {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_email_templates_type ON email_templates(type)`);
 
+  // 19. 创建 API 密钥表
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS api_keys (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      key_hash TEXT NOT NULL UNIQUE,
+      key_prefix TEXT NOT NULL,
+      permissions TEXT DEFAULT 'read',
+      last_used_at DATETIME,
+      use_count INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1,
+      expires_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_api_keys_user ON api_keys(user_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash)`);
+
   // 插入默认管理员用户
   const adminUser = db.prepare('SELECT * FROM users WHERE username = ?').get('admin');
   if (!adminUser) {
