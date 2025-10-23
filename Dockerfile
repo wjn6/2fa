@@ -1,5 +1,28 @@
 # ============================================
-# 单容器版本：前端 + 后端一体化
+# 构建阶段：编译原生模块
+# ============================================
+FROM node:18-alpine AS builder
+
+# 安装编译工具
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    giflib-dev \
+    pixman-dev \
+    pkgconfig
+
+WORKDIR /app/backend
+
+# 复制 package.json 并安装依赖
+COPY backend/package*.json ./
+RUN npm install --production && npm cache clean --force
+
+# ============================================
+# 运行阶段：单容器版本
 # ============================================
 FROM node:18-alpine
 
@@ -10,20 +33,17 @@ RUN apk add --no-cache \
     pango \
     giflib \
     pixman \
-    nginx \
-    supervisor
+    nginx
 
 WORKDIR /app
 
-# 复制后端代码和依赖
-COPY backend/package*.json ./backend/
-WORKDIR /app/backend
-RUN npm install --production && npm cache clean --force
+# 从构建阶段复制 node_modules
+COPY --from=builder /app/backend/node_modules ./backend/node_modules
 
-COPY backend/ ./
+# 复制后端代码
+COPY backend/ ./backend/
 
 # 复制前端编译好的文件
-WORKDIR /app
 COPY frontend/dist /usr/share/nginx/html
 
 # 复制 Nginx 配置
