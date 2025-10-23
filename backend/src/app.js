@@ -23,13 +23,28 @@ app.use(helmet({
   contentSecurityPolicy: false // 允许前端加载资源
 }));
 
-// 速率限制
-const limiter = rateLimit({
+// 速率限制 - 通用API
+const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15分钟
   max: 100, // 限制每个IP 100个请求
-  message: '请求过于频繁，请稍后再试'
+  message: '请求过于频繁，请稍后再试',
+  standardHeaders: true,
+  legacyHeaders: false
 });
-app.use('/api/', limiter);
+
+// 速率限制 - 登录接口（更严格）
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15分钟
+  max: 10, // 限制每个IP 10次登录尝试
+  message: '登录尝试过多，请15分钟后再试',
+  skipSuccessfulRequests: true // 成功的请求不计数
+});
+
+// 应用限流中间件
+app.use('/api/', generalLimiter);
+app.use('/api/users/login', authLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/unlock', authLimiter);
 
 // CORS配置
 app.use(cors({

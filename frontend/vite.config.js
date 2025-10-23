@@ -55,6 +55,29 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src')
     }
   },
+  build: {
+    // 代码分割优化
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['vue', 'vue-router', 'pinia', 'vue-i18n'],
+          'ui': ['tdesign-vue-next'],
+          'utils': ['axios', 'qrcode']
+        }
+      }
+    },
+    // 生产环境优化
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        // 移除 console
+        drop_console: true,
+        drop_debugger: true
+      }
+    },
+    // Chunk 大小警告限制
+    chunkSizeWarningLimit: 600
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,
