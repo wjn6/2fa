@@ -77,13 +77,15 @@ app.use((err, req, res, next) => {
 });
 
 // 启动服务器
-app.listen(PORT, '0.0.0.0', () => {
+// 单容器架构：监听 127.0.0.1，仅通过 Nginx 代理访问
+const HOST = process.env.HOST || '127.0.0.1';
+app.listen(PORT, HOST, () => {
   console.log('=================================');
-  console.log('  2FA Notebook Server - v2.0.0  ');
+  console.log('  2FA Notebook Server - v3.0.0  ');
   console.log('=================================');
-  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`🚀 Server is running on ${HOST}:${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📂 Database: ${dataDir}/2fa.db`);
+  console.log(`📂 Database: ${dataDir}/database.db`);
   console.log('=================================');
 });
 
