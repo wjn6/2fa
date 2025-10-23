@@ -19,7 +19,14 @@ WORKDIR /app/backend
 
 # 复制 package.json 并安装依赖
 COPY backend/package*.json ./
-RUN npm install --production && npm cache clean --force
+
+# 使用淘宝镜像源并增加超时和重试
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-retries 5 && \
+    npm install --production && \
+    npm cache clean --force
 
 # ============================================
 # 运行阶段：单容器版本

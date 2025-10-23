@@ -651,43 +651,61 @@ exports.getEnhancedStatistics = (req, res) => {
         `).get().count
       },
       
-      // 备份统计
-      backups: {
-        total: db.prepare('SELECT COUNT(*) as count FROM backup_records WHERE status = "completed"').get().count,
-        lastBackup: db.prepare('SELECT created_at FROM backup_records WHERE status = "completed" ORDER BY created_at DESC LIMIT 1').get()
-      },
+      // 备份统计（容错处理）
+      backups: (() => {
+        try {
+          return {
+            total: db.prepare('SELECT COUNT(*) as count FROM backup_records WHERE status = "completed"').get().count,
+            lastBackup: db.prepare('SELECT created_at FROM backup_records WHERE status = "completed" ORDER BY created_at DESC LIMIT 1').get()
+          };
+        } catch (e) {
+          return { total: 0, lastBackup: null };
+        }
+      })(),
       
-      // 邀请码统计
-      invites: {
-        total: db.prepare('SELECT COUNT(*) as count FROM invite_codes').get().count,
-        active: db.prepare('SELECT COUNT(*) as count FROM invite_codes WHERE is_active = 1').get().count,
-        used: db.prepare('SELECT COUNT(*) as count FROM invite_code_usage').get().count
-      },
+      // 邀请码统计（容错处理）
+      invites: (() => {
+        try {
+          return {
+            total: db.prepare('SELECT COUNT(*) as count FROM invite_codes').get().count,
+            active: db.prepare('SELECT COUNT(*) as count FROM invite_codes WHERE is_active = 1').get().count,
+            used: db.prepare('SELECT COUNT(*) as count FROM invite_code_usage').get().count
+          };
+        } catch (e) {
+          return { total: 0, active: 0, used: 0 };
+        }
+      })(),
       
-      // 最近30天的趋势
-      trends: {
-        userGrowth: db.prepare(`
-          SELECT DATE(created_at) as date, COUNT(*) as count
-          FROM users
-          WHERE created_at >= datetime('now', '-30 days')
-          GROUP BY DATE(created_at)
-          ORDER BY date DESC
-        `).all(),
-        secretGrowth: db.prepare(`
-          SELECT DATE(created_at) as date, COUNT(*) as count
-          FROM secrets
-          WHERE created_at >= datetime('now', '-30 days')
-          GROUP BY DATE(created_at)
-          ORDER BY date DESC
-        `).all(),
-        loginActivity: db.prepare(`
-          SELECT DATE(created_at) as date, COUNT(*) as count
-          FROM login_logs
-          WHERE created_at >= datetime('now', '-30 days') AND status = 'success'
-          GROUP BY DATE(created_at)
-          ORDER BY date DESC
-        `).all()
-      }
+      // 最近30天的趋势（容错处理）
+      trends: (() => {
+        try {
+          return {
+            userGrowth: db.prepare(`
+              SELECT DATE(created_at) as date, COUNT(*) as count
+              FROM users
+              WHERE created_at >= datetime('now', '-30 days')
+              GROUP BY DATE(created_at)
+              ORDER BY date DESC
+            `).all(),
+            secretGrowth: db.prepare(`
+              SELECT DATE(created_at) as date, COUNT(*) as count
+              FROM secrets
+              WHERE created_at >= datetime('now', '-30 days')
+              GROUP BY DATE(created_at)
+              ORDER BY date DESC
+            `).all(),
+            loginActivity: db.prepare(`
+              SELECT DATE(created_at) as date, COUNT(*) as count
+              FROM login_logs
+              WHERE created_at >= datetime('now', '-30 days') AND status = 'success'
+              GROUP BY DATE(created_at)
+              ORDER BY date DESC
+            `).all()
+          };
+        } catch (e) {
+          return { userGrowth: [], secretGrowth: [], loginActivity: [] };
+        }
+      })()
     };
     
     res.json({ success: true, data: stats });
